@@ -130,7 +130,101 @@ body {
   font-weight: 600;
 }
 
+.btn.small { padding: 6px 12px; font-size: 13px; border-radius: 999px; }
+.btn.danger { border-color: var(--danger); color: var(--danger); }
+
 .empty { text-align: center; color: var(--text-dim); padding: 40px 0; font-size: 14px; }
+
+.head-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+
+/* 备份提醒条 */
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--card-2);
+  border: 1px solid var(--accent-2);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+.banner span { flex: 1; }
+
+/* 日志筛选 */
+.filter-row { display: flex; gap: 8px; margin-bottom: 10px; }
+.filter-row select,
+.search-input {
+  flex: 1;
+  min-width: 0;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--text);
+  padding: 9px 12px;
+  font-size: 15px;
+  font-family: inherit;
+  appearance: none;
+}
+
+/* 表单里的天气行 */
+.weather-row { display: flex; gap: 8px; margin-top: 4px; }
+.weather-row input { flex: 1; margin-top: 0 !important; }
+.weather-row .btn { flex-shrink: 0; white-space: nowrap; }
+
+/* 拟饵百科 */
+.lure-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.lure-chip {
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--text);
+  padding: 10px 8px;
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lure-chip:active { border-color: var(--accent); }
+
+.lure-detail h2 { margin-bottom: 6px; }
+.lure-intro { font-size: 14px; color: var(--text-dim); margin-bottom: 12px; }
+.lure-detail h3 { font-size: 14px; color: var(--accent); margin: 14px 0 6px; }
+.lure-detail p { font-size: 14px; }
+.lure-detail ol { padding-left: 20px; }
+.lure-detail li { font-size: 14px; margin-bottom: 5px; }
+
+/* 图鉴自定义标签 */
+.dex-custom-tag {
+  display: inline-block;
+  font-size: 10px;
+  color: var(--accent-2);
+  border: 1px solid var(--accent-2);
+  border-radius: 999px;
+  padding: 0 5px;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+/* 新版本更新条 */
+.update-bar {
+  position: fixed;
+  top: calc(10px + env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--card-2);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  padding: 8px 10px 8px 16px;
+  font-size: 14px;
+  z-index: 40;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+}
 
 /* 钓获卡片 */
 .catch-card { cursor: pointer; }

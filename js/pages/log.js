@@ -1,39 +1,101 @@
-// 钓获日志页
-import { SPECIES, SPECIES_MAP, LURES, LURE_MAP } from '../data.js';
-import { getAll, put, remove, uid, compressImage, exportBackup, importBackup } from '../db.js';
+// 钓获日志页：记录 + 筛选搜索 + 备份
+import { LURES, LURE_MAP } from '../data.js';
+import { getAll, put, remove, uid, compressImage } from '../db.js';
+import { getAllSpecies, openAddSpeciesSheet } from '../species.js';
+import { exportToFile, importFromFile, needBackupNudge } from '../backup.js';
+import { fetchLocalWeather } from '../weather.js';
 import { esc, toast, openSheet, confirmDialog, fmtDate } from '../ui.js';
 
+// 筛选条件跨渲染保留
+const filter = { q: '', species: '', lure: '' };
+
 export async function renderLog(el) {
-  const catches = (await getAll('catches')).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  const [catches, speciesList] = await Promise.all([getAll('catches'), getAllSpecies()]);
+  catches.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  const spMap = Object.fromEntries(speciesList.map((s) => [s.id, s]));
 
   el.innerHTML = `
     <header class="page-head">
       <h1>📓 钓获日志</h1>
       <p class="sub">共 ${catches.length} 条记录 · 解锁 ${new Set(catches.map((c) => c.speciesId)).size} 种鱼</p>
     </header>
+    ${
+      needBackupNudge(catches.length)
+        ? `<div class="banner" id="backup-banner">
+             <span>📦 记录越来越多了，超过 30 天没备份，建议导出保存</span>
+             <button class="btn small" id="banner-export">立即导出</button>
+           </div>`
+        : ''
+    }
     <div class="btn-row">
       <button id="add-catch" class="btn primary">＋ 记一条</button>
       <button id="export-data" class="btn">导出备份</button>
       <button id="import-data" class="btn">导入</button>
       <input type="file" id="import-file" accept="application/json" hidden>
     </div>
-    <section id="catch-list">
-      ${catches.length === 0 ? '<p class="empty">还没有记录，中鱼了就来记一条吧 🎣</p>' : catches.map(catchCard).join('')}
-    </section>
+    <div class="filter-row">
+      <input type="search" id="log-search" class="search-input" placeholder="搜钓点 / 笔记 / 鱼种…" value="${esc(filter.q)}">
+    </div>
+    <div class="filter-row">
+      <select id="filter-species">
+        <option value="">全部鱼种</option>
+        ${speciesList.map((s) => `<option value="${s.id}" ${s.id === filter.species ? 'selected' : ''}>${s.emoji} ${esc(s.name)}</option>`).join('')}
+      </select>
+      <select id="filter-lure">
+        <option value="">全部拟饵</option>
+        ${LURES.map((l) => `<option value="${l.id}" ${l.id === filter.lure ? 'selected' : ''}>${l.emoji} ${esc(l.name)}</option>`).join('')}
+      </select>
+    </div>
+    <section id="catch-list"></section>
   `;
 
-  el.querySelector('#add-catch').addEventListener('click', () => openForm(null, () => renderLog(el)));
+  const listEl = el.querySelector('#catch-list');
+  const applyFilter = () => {
+    const q = filter.q.trim().toLowerCase();
+    const shown = catches.filter((c) => {
+      if (filter.species && c.speciesId !== filter.species) return false;
+      if (filter.lure && c.lureId !== filter.lure) return false;
+      if (q) {
+        const sp = spMap[c.speciesId];
+        const hay = [sp ? sp.name : '', c.speciesName, c.spot, c.notes, c.weather]
+          .join(' ')
+          .toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+    listEl.innerHTML =
+      shown.length > 0
+        ? shown.map((c) => catchCard(c, spMap)).join('')
+        : catches.length > 0
+          ? '<p class="empty">没有符合筛选条件的记录</p>'
+          : '<p class="empty">还没有记录，中鱼了就来记一条吧 🎣</p>';
+  };
+  applyFilter();
 
-  el.querySelector('#export-data').addEventListener('click', async () => {
-    const data = await exportBackup();
-    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `路亚宝典备份-${fmtDate(new Date().toISOString())}.json`;
-    a.click();
-    URL.revokeObjectURL(a.href);
-    toast('已导出备份文件');
+  el.querySelector('#log-search').addEventListener('input', (e) => {
+    filter.q = e.target.value;
+    applyFilter();
   });
+  el.querySelector('#filter-species').addEventListener('change', (e) => {
+    filter.species = e.target.value;
+    applyFilter();
+  });
+  el.querySelector('#filter-lure').addEventListener('change', (e) => {
+    filter.lure = e.target.value;
+    applyFilter();
+  });
+
+  el.querySelector('#add-catch').addEventListener('click', () =>
+    openForm(null, speciesList, () => renderLog(el))
+  );
+
+  const doExport = async () => {
+    await exportToFile();
+    renderLog(el); // 刷新备份提醒条
+  };
+  el.querySelector('#export-data').addEventListener('click', doExport);
+  el.querySelector('#banner-export')?.addEventListener('click', doExport);
 
   const fileInput = el.querySelector('#import-file');
   el.querySelector('#import-data').addEventListener('click', () => fileInput.click());
@@ -41,16 +103,14 @@ export async function renderLog(el) {
     const file = fileInput.files[0];
     if (!file) return;
     try {
-      const data = JSON.parse(await file.text());
-      const n = await importBackup(data);
-      toast(`已导入 ${n.catches} 条日志、${n.gear} 件装备`);
+      await importFromFile(file);
       renderLog(el);
     } catch (err) {
       toast('导入失败：' + err.message);
     }
   });
 
-  el.querySelector('#catch-list').addEventListener('click', async (e) => {
+  listEl.addEventListener('click', async (e) => {
     const card = e.target.closest('.catch-card');
     if (!card) return;
     const record = catches.find((c) => c.id === card.dataset.id);
@@ -62,13 +122,13 @@ export async function renderLog(el) {
         renderLog(el);
       }
     } else {
-      openForm(record, () => renderLog(el));
+      openForm(record, speciesList, () => renderLog(el));
     }
   });
 }
 
-function catchCard(c) {
-  const sp = SPECIES_MAP[c.speciesId];
+function catchCard(c, spMap) {
+  const sp = spMap[c.speciesId];
   const lure = LURE_MAP[c.lureId];
   const size = [c.weight ? `${c.weight} 斤` : '', c.length ? `${c.length} cm` : ''].filter(Boolean).join(' / ');
   return `
@@ -86,13 +146,21 @@ function catchCard(c) {
     </div>`;
 }
 
-function openForm(record, onSaved) {
+function speciesOptions(speciesList, selected) {
+  return `
+    <option value="">请选择</option>
+    ${speciesList.map((s) => `<option value="${s.id}" ${s.id === selected ? 'selected' : ''}>${s.emoji} ${esc(s.name)}</option>`).join('')}
+    <option value="__add">＋ 新建自定义鱼种…</option>`;
+}
+
+function openForm(record, speciesList, onSaved) {
   const isEdit = !!record;
   const c = record || {
     id: uid(),
     date: new Date().toISOString().slice(0, 10),
     speciesId: '', lureId: '', spot: '', weather: '', weight: '', length: '', notes: '', photo: '',
   };
+  const localSpecies = [...speciesList];
 
   openSheet(
     `
@@ -100,10 +168,7 @@ function openForm(record, onSaved) {
     <form id="catch-form" class="form">
       <label>日期<input type="date" name="date" value="${esc(c.date)}" required></label>
       <label>鱼种
-        <select name="speciesId" required>
-          <option value="">请选择</option>
-          ${SPECIES.map((s) => `<option value="${s.id}" ${s.id === c.speciesId ? 'selected' : ''}>${s.emoji} ${esc(s.name)}</option>`).join('')}
-        </select>
+        <select name="speciesId" required>${speciesOptions(localSpecies, c.speciesId)}</select>
       </label>
       <label>拟饵
         <select name="lureId">
@@ -116,7 +181,12 @@ function openForm(record, onSaved) {
         <label>长度（cm）<input type="number" step="1" min="0" name="length" value="${esc(c.length)}" placeholder="选填"></label>
       </div>
       <label>钓点<input type="text" name="spot" value="${esc(c.spot)}" placeholder="如：西湾大坝左侧桦尖"></label>
-      <label>天气<input type="text" name="weather" value="${esc(c.weather)}" placeholder="如：阴 22℃ 微风"></label>
+      <label>天气
+        <div class="weather-row">
+          <input type="text" name="weather" value="${esc(c.weather)}" placeholder="如：阴 22℃ 微风">
+          <button type="button" class="btn" id="auto-weather">📍 自动</button>
+        </div>
+      </label>
       <label>笔记<textarea name="notes" rows="2" placeholder="手法、标点、心得…">${esc(c.notes)}</textarea></label>
       <label class="photo-label">照片
         <input type="file" name="photo" accept="image/*" capture="environment" hidden>
@@ -142,14 +212,50 @@ function openForm(record, onSaved) {
           toast('图片处理失败');
         }
       });
+
+      // 鱼种下拉里的「新建自定义鱼种」
+      const spSelect = sheet.querySelector('select[name=speciesId]');
+      let prevSpecies = c.speciesId;
+      spSelect.addEventListener('change', () => {
+        if (spSelect.value !== '__add') {
+          prevSpecies = spSelect.value;
+          return;
+        }
+        spSelect.value = prevSpecies; // 先复位，等新建成功再选中
+        openAddSpeciesSheet((sp) => {
+          localSpecies.push(sp);
+          spSelect.innerHTML = speciesOptions(localSpecies, sp.id);
+          prevSpecies = sp.id;
+        });
+      });
+
+      // 天气自动获取
+      const weatherBtn = sheet.querySelector('#auto-weather');
+      const weatherInput = sheet.querySelector('input[name=weather]');
+      weatherBtn.addEventListener('click', async () => {
+        weatherBtn.disabled = true;
+        weatherBtn.textContent = '获取中…';
+        try {
+          weatherInput.value = await fetchLocalWeather();
+        } catch (err) {
+          toast(err.message || '天气获取失败');
+        } finally {
+          weatherBtn.disabled = false;
+          weatherBtn.textContent = '📍 自动';
+        }
+      });
+
       sheet.querySelector('#cancel-btn').addEventListener('click', close);
       sheet.querySelector('#catch-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const fd = new FormData(e.target);
+        const speciesId = fd.get('speciesId');
+        const sp = localSpecies.find((s) => s.id === speciesId);
         await put('catches', {
           ...c,
           date: fd.get('date'),
-          speciesId: fd.get('speciesId'),
+          speciesId,
+          speciesName: sp ? sp.name : c.speciesName || '', // 快照，防自定义鱼种被删后显示丢失
           lureId: fd.get('lureId'),
           weight: fd.get('weight'),
           length: fd.get('length'),

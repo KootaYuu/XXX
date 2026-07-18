@@ -1,6 +1,7 @@
 // 拟饵推荐页
-import { SPECIES } from '../data.js';
+import { SPECIES, LURE_MAP } from '../data.js';
 import { recommend, currentSeason } from '../recommend-engine.js';
+import { openLureSheet } from '../lure-detail.js';
 import { esc, stars } from '../ui.js';
 
 const SEASONS = ['春', '夏', '秋', '冬'];
@@ -63,7 +64,12 @@ export function renderRecommend(el) {
     });
   });
 
-  renderResults(el.querySelector('#rec-results'));
+  const resultsEl = el.querySelector('#rec-results');
+  resultsEl.addEventListener('click', (e) => {
+    const card = e.target.closest('.lure-card');
+    if (card) openLureSheet(LURE_MAP[card.dataset.lureId]);
+  });
+  renderResults(resultsEl);
 }
 
 function renderResults(container) {
@@ -71,10 +77,11 @@ function renderResults(container) {
   const medals = ['🥇', '🥈', '🥉', '4️⃣'];
   container.innerHTML = `
     <h2 class="section-title">推荐结果</h2>
+    <p class="note" style="margin:-4px 0 8px">点击拟饵卡片查看详细手法</p>
     ${results
       .map(
         (r, i) => `
-      <div class="card lure-card">
+      <div class="card lure-card" data-lure-id="${r.lure.id}">
         <div class="lure-head">
           <span class="lure-rank">${medals[i]}</span>
           <span class="lure-name">${r.lure.emoji} ${esc(r.lure.name)}</span>

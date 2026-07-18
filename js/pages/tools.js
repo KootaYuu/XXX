@@ -1,6 +1,9 @@
-// 实用工具页：线组换算、前导搭配、钓组图解
-import { LINE_TABLE, RIGS } from '../data.js';
-import { esc } from '../ui.js';
+// 实用工具页：线组换算、前导搭配、钓组图解、拟饵百科、数据管理
+import { LINE_TABLE, RIGS, LURES, LURE_MAP } from '../data.js';
+import { storageStatus } from '../db.js';
+import { exportToFile, importFromFile, lastBackupText } from '../backup.js';
+import { openLureSheet } from '../lure-detail.js';
+import { esc, toast } from '../ui.js';
 
 export function renderTools(el) {
   el.innerHTML = `
@@ -32,6 +35,25 @@ export function renderTools(el) {
     </section>
 
     <section class="card">
+      <h2 class="card-title">拟饵手法百科</h2>
+      <p class="note">点击任意拟饵，查看详细操作手法、适用场景和装备搭配</p>
+      <div class="lure-grid" id="lure-grid">
+        ${LURES.map((l) => `<button class="lure-chip" data-id="${l.id}">${l.emoji} ${esc(l.name)}</button>`).join('')}
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 class="card-title">数据管理</h2>
+      <p class="note" id="storage-info">存储用量统计中…</p>
+      <p class="note">上次备份：${esc(lastBackupText())}　<span id="persist-status"></span></p>
+      <div class="btn-row" style="margin-bottom:0">
+        <button id="tools-export" class="btn">导出备份</button>
+        <button id="tools-import" class="btn">导入备份</button>
+        <input type="file" id="tools-import-file" accept="application/json" hidden>
+      </div>
+    </section>
+
+    <section class="card">
       <h2 class="card-title">常用钓组图解</h2>
       <div id="rig-list">
         ${RIGS.map(
@@ -46,6 +68,37 @@ export function renderTools(el) {
       </div>
     </section>
   `;
+
+  // 拟饵百科
+  el.querySelector('#lure-grid').addEventListener('click', (e) => {
+    const btn = e.target.closest('.lure-chip');
+    if (btn) openLureSheet(LURE_MAP[btn.dataset.id]);
+  });
+
+  // 数据管理
+  storageStatus().then(({ usage, quota, persisted }) => {
+    const infoEl = el.querySelector('#storage-info');
+    const mb = (n) => (n / 1024 / 1024).toFixed(1);
+    infoEl.textContent =
+      usage != null ? `本地存储已用 ${mb(usage)} MB / 配额约 ${mb(quota)} MB` : '当前浏览器不支持存储用量查询';
+    const persistEl = el.querySelector('#persist-status');
+    if (persisted === true) persistEl.textContent = '✅ 已开启持久化存储';
+    else if (persisted === false) persistEl.textContent = '⚠️ 未持久化，请定期备份';
+  });
+  el.querySelector('#tools-export').addEventListener('click', async () => {
+    await exportToFile();
+    renderTools(el);
+  });
+  const importFile = el.querySelector('#tools-import-file');
+  el.querySelector('#tools-import').addEventListener('click', () => importFile.click());
+  importFile.addEventListener('change', async () => {
+    if (!importFile.files[0]) return;
+    try {
+      await importFromFile(importFile.files[0]);
+    } catch (err) {
+      toast('导入失败：' + err.message);
+    }
+  });
 
   const chips = el.querySelector('#pe-chips');
   const result = el.querySelector('#leader-result');
