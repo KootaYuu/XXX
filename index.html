@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>静噪 · 白噪音播放器</title>
+<meta name="description" content="在浏览器里实时合成的白噪音播放器：雨声、海浪、篝火、风扇等音景可自由混合，无需下载任何音频文件。">
+<meta name="theme-color" content="#0d1117">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230d1117'/><g fill='%237aa2f7'><rect x='6' y='13' width='3' height='6' rx='1.5'/><rect x='12' y='8' width='3' height='16' rx='1.5'/><rect x='18' y='11' width='3' height='10' rx='1.5'/><rect x='24' y='14' width='3' height='4' rx='1.5'/></g></svg>">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+  <header class="hero">
+    <div class="hero-text">
+      <h1>静噪</h1>
+      <p>浏览器内实时合成的白噪音，自由叠加出属于你的背景音。无需下载音频，离线也能用。</p>
+    </div>
+    <canvas id="viz" class="viz" width="480" height="64" aria-hidden="true"></canvas>
+  </header>
+
+  <main>
+    <section class="presets" aria-labelledby="preset-title">
+      <div class="section-head">
+        <h2 id="preset-title">场景</h2>
+        <button type="button" id="save-preset" class="ghost-btn">保存当前混音</button>
+      </div>
+      <div id="preset-list" class="preset-list"></div>
+    </section>
+
+    <section aria-labelledby="sound-title">
+      <div class="section-head">
+        <h2 id="sound-title">音源</h2>
+        <button type="button" id="reset" class="ghost-btn">全部归零</button>
+      </div>
+      <div id="grid" class="grid"></div>
+    </section>
+  </main>
+
+  <footer class="bar">
+    <button type="button" id="play" class="play-btn" aria-label="播放" aria-pressed="false">
+      <svg class="icon-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>
+      <svg class="icon-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.5v14H7zm6.5 0H17v14h-3.5z"/></svg>
+    </button>
+
+    <label class="master">
+      <span class="master-label">总音量</span>
+      <input type="range" id="master" min="0" max="100" value="70" aria-label="总音量">
+      <output id="master-val">70%</output>
+    </label>
+
+    <label class="timer">
+      <span class="timer-label">定时</span>
+      <select id="timer" aria-label="睡眠定时">
+        <option value="0">关闭</option>
+        <option value="15">15 分钟</option>
+        <option value="30">30 分钟</option>
+        <option value="45">45 分钟</option>
+        <option value="60">1 小时</option>
+        <option value="90">1.5 小时</option>
+        <option value="120">2 小时</option>
+      </select>
+      <output id="timer-val" class="timer-val"></output>
+    </label>
+  </footer>
+
+  <p class="hint">快捷键：<kbd>空格</kbd> 播放/暂停 · <kbd>↑</kbd><kbd>↓</kbd> 调整总音量 · <kbd>M</kbd> 静音</p>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
