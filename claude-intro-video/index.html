@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Claude 介绍视频</title>
+<link href="fonts/fonts.css" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F4F0E8;
+    --ink: #1F1E1C;
+    --muted: #6B665E;
+    --accent: #D97757;
+    --accent-deep: #B85C3E;
+    --accent-soft: #F3DED2;
+    --card: #FFFDF9;
+    --line: #E4DDD1;
+    --serif: "Noto Serif SC", "WenQuanYi Zen Hei", serif;
+    --sans: "Noto Sans SC", "WenQuanYi Zen Hei", sans-serif;
+    --mono: "JetBrains Mono", "DejaVu Sans Mono", monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--bg); }
+  body { font-family: var(--sans); color: var(--ink); position: relative; }
+
+  .blob { position: absolute; border-radius: 50%; filter: blur(40px); pointer-events: none; }
+  #b1 { width: 900px; height: 900px; background: radial-gradient(circle, rgba(217,119,87,.22), rgba(217,119,87,0) 70%); }
+  #b2 { width: 1100px; height: 1100px; background: radial-gradient(circle, rgba(204,170,120,.20), rgba(204,170,120,0) 70%); }
+  #b3 { width: 700px; height: 700px; background: radial-gradient(circle, rgba(120,140,170,.12), rgba(120,140,170,0) 70%); }
+
+  .scene { position: absolute; inset: 0; opacity: 0; }
+  .r { opacity: 0; will-change: transform, opacity; }
+
+  /* chrome */
+  #chrome { position: absolute; inset: 0; opacity: 0; }
+  #brand { position: absolute; left: 96px; top: 64px; display: flex; align-items: center; gap: 14px; font: 500 26px var(--serif); }
+  #brand svg { width: 34px; height: 34px; }
+  #pager { position: absolute; right: 96px; top: 70px; font: 500 22px var(--mono); color: var(--muted); letter-spacing: 2px; }
+  #progress { position: absolute; left: 96px; right: 96px; bottom: 64px; height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
+  #progress i { display: block; height: 100%; width: 0; background: var(--accent); }
+
+  .kicker { font: 500 26px var(--mono); color: var(--accent); letter-spacing: 3px; }
+  .h2 { font: 700 76px/1.2 var(--serif); letter-spacing: 1px; }
+  .lead { font: 400 36px/1.7 var(--sans); color: var(--muted); }
+
+  /* S1 */
+  #s1 .center { position: absolute; left: 0; right: 0; top: 190px; display: flex; flex-direction: column; align-items: center; }
+  #logo1 { width: 260px; height: 260px; }
+  #title1 { margin-top: 30px; font: 700 190px/1 var(--serif); letter-spacing: 4px; display: flex; }
+  #title1 span { display: inline-block; opacity: 0; }
+  #sub1 { margin-top: 44px; font: 400 44px var(--sans); color: var(--muted); letter-spacing: 6px; }
+  #rule1 { margin-top: 40px; height: 3px; width: 0; background: var(--accent); border-radius: 2px; }
+
+  /* S2 */
+  #s2 .left { position: absolute; left: 140px; top: 230px; width: 1020px; }
+  #s2 .h2 { margin: 28px 0 44px; }
+  #s2 .lead div { opacity: 0; }
+  #s2 .lead b { color: var(--ink); font-weight: 500; }
+  #s2 .right { position: absolute; right: 150px; top: 250px; width: 520px; display: flex; flex-direction: column; gap: 34px; }
+  .pill { display: flex; align-items: center; gap: 28px; padding: 30px 40px; background: var(--card); border: 2px solid var(--line); border-radius: 26px; box-shadow: 0 18px 40px rgba(60,40,20,.06); }
+  .pill .dot { width: 64px; height: 64px; border-radius: 50%; background: var(--accent-soft); display: grid; place-items: center; font: 700 30px var(--serif); color: var(--accent-deep); flex: none; }
+  .pill .t { font: 700 40px var(--serif); }
+  .pill .e { font: 500 22px var(--mono); color: var(--muted); letter-spacing: 1px; margin-top: 4px; }
+
+  /* S3 */
+  #s3 .head { position: absolute; left: 140px; top: 190px; }
+  #s3 .h2 { margin-top: 20px; }
+  #grid { position: absolute; left: 140px; right: 140px; top: 440px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 34px; }
+  .card { background: var(--card); border: 2px solid var(--line); border-radius: 28px; padding: 36px 40px; display: flex; gap: 30px; align-items: flex-start; box-shadow: 0 18px 40px rgba(60,40,20,.06); }
+  .icon { width: 84px; height: 84px; flex: none; border-radius: 22px; background: var(--accent-soft); display: grid; place-items: center; }
+  .icon svg { width: 46px; height: 46px; fill: none; stroke: var(--accent-deep); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .card .t { font: 700 38px var(--serif); margin-top: 4px; }
+  .card .d { font: 400 26px/1.55 var(--sans); color: var(--muted); margin-top: 12px; }
+
+  /* S4 */
+  #s4 .head { position: absolute; left: 140px; top: 300px; width: 560px; }
+  #s4 .h2 { margin: 20px 0 36px; }
+  #chat { position: absolute; left: 780px; top: 270px; width: 1000px; height: 530px; background: var(--card); border: 2px solid var(--line); border-radius: 32px; box-shadow: 0 30px 70px rgba(60,40,20,.10); overflow: hidden; }
+  #chat .bar { height: 84px; border-bottom: 2px solid var(--line); display: flex; align-items: center; padding: 0 36px; gap: 14px; font: 500 28px var(--serif); }
+  #chat .bar svg { width: 34px; height: 34px; }
+  #chat .bar .lights { margin-left: auto; display: flex; gap: 10px; }
+  #chat .bar .lights i { width: 14px; height: 14px; border-radius: 50%; background: var(--line); }
+  #chat .body { padding: 44px 48px; display: flex; flex-direction: column; gap: 36px; }
+  .msg-user { align-self: flex-end; max-width: 640px; background: #EDE6DA; padding: 24px 32px; border-radius: 26px 26px 6px 26px; font: 400 32px/1.55 var(--sans); }
+  .msg-ai { display: flex; gap: 22px; align-items: flex-start; }
+  .msg-ai svg { width: 48px; height: 48px; flex: none; margin-top: 6px; }
+  .msg-ai .txt { font: 400 34px/1.7 var(--sans); max-width: 760px; min-height: 58px; }
+  .caret { display: inline-block; width: 3px; height: 38px; background: var(--accent); vertical-align: -6px; margin-left: 4px; }
+  .dots { display: flex; gap: 10px; padding-top: 24px; }
+  .dots i { width: 14px; height: 14px; border-radius: 50%; background: var(--accent); }
+
+  /* S5 */
+  #s5 .head { position: absolute; left: 140px; top: 190px; }
+  #s5 .h2 { margin-top: 20px; }
+  #models { position: absolute; left: 140px; right: 140px; top: 440px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; }
+  .model { background: var(--card); border: 2px solid var(--line); border-radius: 30px; padding: 44px 48px; box-shadow: 0 18px 40px rgba(60,40,20,.06); }
+  .model.hl { border-color: var(--accent); }
+  .model .n { font: 700 58px var(--serif); }
+  .model .d { font: 400 28px/1.5 var(--sans); color: var(--muted); margin: 14px 0 34px; min-height: 84px; }
+  .meter { margin-top: 20px; }
+  .meter .l { display: flex; justify-content: space-between; font: 500 24px var(--sans); color: var(--muted); margin-bottom: 10px; }
+  .meter .track { height: 14px; border-radius: 7px; background: #EFE8DD; overflow: hidden; }
+  .meter .fill { height: 100%; width: 0; border-radius: 7px; background: var(--accent); }
+  .meter.sp .fill { background: #C9A26B; }
+  #note5 { position: absolute; left: 140px; top: 948px; font: 400 22px var(--sans); color: #9A948A; }
+
+  /* S6 */
+  #s6 .head { position: absolute; left: 140px; top: 190px; }
+  #s6 .h2 { margin-top: 20px; }
+  #where { position: absolute; left: 140px; right: 140px; top: 440px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; }
+  .where { background: var(--card); border: 2px solid var(--line); border-radius: 30px; padding: 44px 48px; height: 440px; box-shadow: 0 18px 40px rgba(60,40,20,.06); display: flex; flex-direction: column; }
+  .where .t { font: 700 46px var(--serif); margin-top: 30px; }
+  .where .d { font: 400 28px/1.55 var(--sans); color: var(--muted); margin-top: 14px; }
+  .where .foot { margin-top: auto; }
+  .tag { display: inline-block; font: 500 24px var(--mono); color: var(--accent-deep); background: var(--accent-soft); padding: 8px 18px; border-radius: 12px; }
+  .term { background: #262521; color: #EDE6DA; border-radius: 16px; padding: 18px 22px; font: 500 24px var(--mono); }
+  .term .pr { color: var(--accent); }
+  .term .caret { height: 26px; vertical-align: -4px; }
+
+  /* S7 */
+  #s7 .head { position: absolute; left: 0; right: 0; top: 190px; text-align: center; }
+  #s7 .h2 { margin-top: 20px; }
+  #vals { position: absolute; left: 240px; right: 240px; top: 470px; display: flex; justify-content: space-between; }
+  .val { width: 380px; text-align: center; }
+  .val .ring { width: 150px; height: 150px; margin: 0 auto; border-radius: 50%; background: var(--card); border: 2px solid var(--line); display: grid; place-items: center; box-shadow: 0 18px 40px rgba(60,40,20,.08); }
+  .val .ring svg { width: 70px; height: 70px; fill: none; stroke: var(--accent-deep); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .val .t { font: 700 64px var(--serif); margin-top: 34px; }
+  .val .e { font: 500 26px var(--mono); color: var(--muted); letter-spacing: 3px; margin-top: 10px; }
+  #vline { position: absolute; left: 430px; top: 544px; height: 2px; width: 0; background: repeating-linear-gradient(90deg, var(--accent) 0 12px, transparent 12px 22px); }
+  #cai { position: absolute; left: 0; right: 0; top: 880px; text-align: center; font: 400 30px var(--sans); color: var(--muted); }
+  #cai b { color: var(--ink); font-weight: 500; }
+
+  /* S8 */
+  #s8 .center { position: absolute; left: 0; right: 0; top: 200px; display: flex; flex-direction: column; align-items: center; }
+  #logo8 { width: 200px; height: 200px; }
+  #hello { margin-top: 50px; font: 700 96px var(--serif); min-height: 130px; }
+  #help { margin-top: 26px; font: 400 44px var(--sans); color: var(--muted); letter-spacing: 4px; }
+  #url { margin-top: 60px; font: 500 34px var(--mono); color: var(--card); background: var(--ink); padding: 16px 40px; border-radius: 40px; letter-spacing: 2px; }
+
+  #fade { position: absolute; inset: 0; background: var(--bg); opacity: 0; }
+  #preload { position: absolute; left: 0; top: 0; opacity: 0; font-family: var(--sans); white-space: nowrap; }
+  #preload .s { font-family: var(--serif); font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="blob" id="b1"></div>
+<div class="blob" id="b2"></div>
+<div class="blob" id="b3"></div>
+
+<!-- S1 · 开场 -->
+<section class="scene" id="s1">
+  <div class="center">
+    <svg id="logo1" viewBox="-100 -100 200 200"></svg>
+    <div id="title1"></div>
+    <div id="sub1" class="r">由 Anthropic 打造的 AI 助手</div>
+    <div id="rule1"></div>
+  </div>
+</section>
+
+<!-- S2 · 认识 Claude -->
+<section class="scene" id="s2">
+  <div class="left">
+    <div class="kicker r">01 · 认识 CLAUDE</div>
+    <div class="h2 r">一个值得信赖的<br>AI 伙伴</div>
+    <div class="lead">
+      <div><b>Claude</b> 是由 <b>Anthropic</b> 开发的 AI 助手。</div>
+      <div>Anthropic 是一家专注于 AI 安全与研究的公司，</div>
+      <div>致力于构建<b>可靠、可解释、可引导</b>的 AI 系统。</div>
+    </div>
+  </div>
+  <div class="right">
+    <div class="pill r"><div class="dot">稳</div><div><div class="t">可靠</div><div class="e">RELIABLE</div></div></div>
+    <div class="pill r"><div class="dot">明</div><div><div class="t">可解释</div><div class="e">INTERPRETABLE</div></div></div>
+    <div class="pill r"><div class="dot">控</div><div><div class="t">可引导</div><div class="e">STEERABLE</div></div></div>
+  </div>
+</section>
+
+<!-- S3 · 能力 -->
+<section class="scene" id="s3">
+  <div class="head">
+    <div class="kicker r">02 · 它能做什么</div>
+    <div class="h2 r">从灵感到落地，全程协作</div>
+  </div>
+  <div id="grid">
+    <div class="card r"><div class="icon"><svg viewBox="0 0 24 24"><path d="M4 20h4L19.5 8.5a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="M14.5 7.5l2 2"/></svg></div><div><div class="t">写作与创作</div><div class="d">文章、邮件、故事与文案，<br>构思润色一气呵成</div></div></div>
+    <div class="card r"><div class="icon"><svg viewBox="0 0 24 24"><path d="M8 6l-6 6 6 6M16 6l6 6-6 6M13.5 4l-3 16"/></svg></div><div><div class="t">编程与调试</div><div class="d">编写、审查、重构代码，<br>快速定位并修复 Bug</div></div></div>
+    <div class="card r"><div class="icon"><svg viewBox="0 0 24 24"><path d="M4 20V11M10 20V5M16 20v-7M21 20H3"/></svg></div><div><div class="t">分析与推理</div><div class="d">拆解复杂问题，<br>一步一步严谨推理</div></div></div>
+    <div class="card r"><div class="icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3.2 3.2 3.2 14.8 0 18M12 3c-3.2 3.2-3.2 14.8 0 18"/></svg></div><div><div class="t">多语言交流</div><div class="d">中文、英文、日文等，<br>多种语言自如切换</div></div></div>
+    <div class="card r"><div class="icon"><svg viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></div><div><div class="t">视觉理解</div><div class="d">读懂图片、图表<br>以及 PDF 文档</div></div></div>
+    <div class="card r"><div class="icon"><svg viewBox="0 0 24 24"><path d="M7 3h8l4 4v14H7z"/><path d="M15 3v4h4M10 12h6M10 16h6"/><path d="M4 6v15h11"/></svg></div><div><div class="t">长文本处理</div><div class="d">一次消化整本书<br>或大型代码库</div></div></div>
+  </div>
+</section>
+
+<!-- S4 · 对话 -->
+<section class="scene" id="s4">
+  <div class="head">
+    <div class="kicker r">03 · 对话体验</div>
+    <div class="h2 r">像和朋友聊天<br>一样自然</div>
+    <div class="lead r">用日常语言提问，<br>得到清晰、有温度的回答。</div>
+  </div>
+  <div id="chat" class="r">
+    <div class="bar"><svg class="spark" viewBox="-100 -100 200 200"></svg>Claude<div class="lights"><i></i><i></i><i></i></div></div>
+    <div class="body">
+      <div class="msg-user r" id="q4">用一句话解释什么是递归？</div>
+      <div class="msg-ai r" id="a4"><svg class="spark" viewBox="-100 -100 200 200"></svg><div class="txt" id="a4txt"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- S5 · 模型家族 -->
+<section class="scene" id="s5">
+  <div class="head">
+    <div class="kicker r">04 · 模型家族</div>
+    <div class="h2 r">为不同需求，选择合适的模型</div>
+  </div>
+  <div id="models">
+    <div class="model r"><div class="n">Haiku</div><div class="d">快速、轻量、经济，<br>适合实时与大批量任务</div>
+      <div class="meter"><div class="l"><span>智能</span></div><div class="track"><div class="fill" data-v="0.58"></div></div></div>
+      <div class="meter sp"><div class="l"><span>速度</span></div><div class="track"><div class="fill" data-v="0.96"></div></div></div></div>
+    <div class="model r"><div class="n">Sonnet</div><div class="d">能力与速度的均衡之选，<br>胜任绝大多数日常工作</div>
+      <div class="meter"><div class="l"><span>智能</span></div><div class="track"><div class="fill" data-v="0.8"></div></div></div>
+      <div class="meter sp"><div class="l"><span>速度</span></div><div class="track"><div class="fill" data-v="0.76"></div></div></div></div>
+    <div class="model hl r"><div class="n">Opus</div><div class="d">最强大的智能，<br>攻克最复杂的任务</div>
+      <div class="meter"><div class="l"><span>智能</span></div><div class="track"><div class="fill" data-v="0.98"></div></div></div>
+      <div class="meter sp"><div class="l"><span>速度</span></div><div class="track"><div class="fill" data-v="0.55"></div></div></div></div>
+  </div>
+  <div id="note5" class="r">* 条形图为相对定位示意，非基准测试数据</div>
+</section>
+
+<!-- S6 · 使用方式 -->
+<section class="scene" id="s6">
+  <div class="head">
+    <div class="kicker r">05 · 随时随地</div>
+    <div class="h2 r">在你工作的地方，与你协作</div>
+  </div>
+  <div id="where">
+    <div class="where r"><div class="icon"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H10l-6 4z"/><path d="M8 9.5h8M8 12.5h5"/></svg></div>
+      <div class="t">Claude 应用</div><div class="d">网页、桌面端与移动端，<br>随时随地开启对话</div><div class="foot"><span class="tag">claude.ai</span></div></div>
+    <div class="where r"><div class="icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M7 9l3 3-3 3M13 15h4"/></svg></div>
+      <div class="t">Claude Code</div><div class="d">在终端与 IDE 中<br>并肩写代码的编程伙伴</div><div class="foot"><div class="term"><span class="pr">$</span> <span id="cmd6"></span><span class="caret" id="caret6"></span></div></div></div>
+    <div class="where r"><div class="icon"><svg viewBox="0 0 24 24"><path d="M8 4C6 4 5 5 5 7v2c0 1.5-1 3-2 3 1 0 2 1.5 2 3v2c0 2 1 3 3 3M16 4c2 0 3 1 3 3v2c0 1.5 1 3 2 3-1 0-2 1.5-2 3v2c0 2-1 3-3 3"/></svg></div>
+      <div class="t">Claude API</div><div class="d">开发者平台，<br>把 Claude 集成进你的产品</div><div class="foot"><span class="tag">Developer Platform</span></div></div>
+  </div>
+</section>
+
+<!-- S7 · 原则 -->
+<section class="scene" id="s7">
+  <div class="head">
+    <div class="kicker r">06 · 核心原则</div>
+    <div class="h2 r">有帮助，也值得信赖</div>
+  </div>
+  <div id="vline"></div>
+  <div id="vals">
+    <div class="val r"><div class="ring"><svg viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10.2A4.2 4.2 0 0 1 12 7.3a4.2 4.2 0 0 1 7.5 2.5C19.5 15.4 12 20 12 20z"/></svg></div><div class="t">有帮助</div><div class="e">HELPFUL</div></div>
+    <div class="val r"><div class="ring"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.3l2.7 2.7L16 9.5"/></svg></div><div class="t">诚实</div><div class="e">HONEST</div></div>
+    <div class="val r"><div class="ring"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg></div><div class="t">无害</div><div class="e">HARMLESS</div></div>
+  </div>
+  <div id="cai" class="r">以<b>“宪法式 AI”（Constitutional AI）</b>等方法训练，让 AI 更安全、更可靠</div>
+</section>
+
+<!-- S8 · 结尾 -->
+<section class="scene" id="s8">
+  <div class="center">
+    <svg id="logo8" viewBox="-100 -100 200 200"></svg>
+    <div id="hello"></div>
+    <div id="help" class="r">有什么可以帮你的？</div>
+    <div id="url" class="r">claude.ai</div>
+  </div>
+</section>
+
+<div id="chrome">
+  <div id="brand"><svg class="spark" viewBox="-100 -100 200 200"></svg>Claude</div>
+  <div id="pager">01 / 06</div>
+  <div id="progress"><i></i></div>
+</div>
+
+<div id="fade"></div>
+<div id="preload"></div>
+
+<script>
+const DURATION = 64;
+const TITLE = "Claude";
+const ANSWER = "递归，就是函数在解决问题时调用它自己——就像两面相对的镜子，一层映着一层，直到遇到终止条件才停下来。";
+const HELLO = "你好，我是 Claude。";
+const CMD = "claude \"帮我修复这个 bug\"";
+
+const SCENES = [
+  { id: "s1", a: 0,  b: 7 },
+  { id: "s2", a: 7,  b: 15 },
+  { id: "s3", a: 15, b: 25 },
+  { id: "s4", a: 25, b: 35 },
+  { id: "s5", a: 35, b: 43 },
+  { id: "s6", a: 43, b: 51 },
+  { id: "s7", a: 51, b: 58 },
+  { id: "s8", a: 58, b: DURATION + 1 },
+];
+
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const clamp = x => Math.max(0, Math.min(1, x));
+const prog = (t, a, d) => clamp((t - a) / d);
+const out3 = x => 1 - Math.pow(1 - x, 3);
+const inout = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const back = x => { const c1 = 1.4, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+
+function reveal(el, t, a, { d = .8, y = 40, x = 0, s = 1, ease = out3 } = {}) {
+  const k = ease(prog(t, a, d));
+  el.style.opacity = clamp(k);
+  el.style.transform = `translate(${x * (1 - k)}px, ${y * (1 - k)}px) scale(${s + (1 - s) * k})`;
+}
+
+function typeInto(el, str, t, a, cps, caret = true) {
+  const chars = Array.from(str);
+  const n = Math.max(0, Math.min(chars.length, Math.floor((t - a) * cps)));
+  const blink = (n >= chars.length) ? (Math.floor(t * 2) % 2 === 0) : true;
+  el.innerHTML = "";
+  el.appendChild(document.createTextNode(chars.slice(0, n).join("")));
+  if (caret && t >= a - .4) {
+    const c = document.createElement("span");
+    c.className = "caret";
+    c.style.opacity = blink ? 1 : 0;
+    el.appendChild(c);
+  }
+  return n / chars.length;
+}
+
+/* Spark mark: our own radial-ray emblem */
+const RAYS = 12;
+function buildSpark(svg) {
+  const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  for (let i = 0; i < RAYS; i++) {
+    const l = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    l.setAttribute("stroke", "#D97757");
+    l.setAttribute("stroke-linecap", "round");
+    l.setAttribute("stroke-width", i % 2 ? 13 : 17);
+    g.appendChild(l);
+  }
+  svg.appendChild(g);
+  svg._g = g;
+  drawSpark(svg, 1, 0);
+}
+function drawSpark(svg, grow, rot, pulse = 0) {
+  const lines = svg._g.children;
+  for (let i = 0; i < RAYS; i++) {
+    const ang = (i / RAYS) * Math.PI * 2 - Math.PI / 2;
+    const base = (i % 2 ? 62 : 84) + ((i * 37) % 7) - 3;
+    const k = out3(clamp(grow * 1.6 - i * 0.05));
+    const len = 12 + (base - 12) * k * (1 + pulse * Math.sin(i * 1.7 + rot * 4) * .06);
+    const r0 = 0;
+    const l = lines[i];
+    l.setAttribute("x1", Math.cos(ang) * r0);
+    l.setAttribute("y1", Math.sin(ang) * r0);
+    l.setAttribute("x2", Math.cos(ang) * len);
+    l.setAttribute("y2", Math.sin(ang) * len);
+    l.style.opacity = k > 0 ? 1 : 0;
+  }
+  svg._g.setAttribute("transform", `rotate(${rot})`);
+}
+
+/* setup */
+$$("svg.spark").forEach(buildSpark);
+buildSpark($("#logo1"));
+buildSpark($("#logo8"));
+Array.from(TITLE).forEach(ch => { const s = document.createElement("span"); s.textContent = ch; $("#title1").appendChild(s); });
+$("#preload").innerHTML = `<span>${ANSWER}${HELLO}${CMD}</span><span class="s">${HELLO}${TITLE}</span>`;
+
+const S = Object.fromEntries(SCENES.map(s => [s.id, $("#" + s.id)]));
+
+const update = {
+  s1(t) {
+    drawSpark($("#logo1"), prog(t, .3, 1.4), -30 + t * 6, prog(t, 1.7, 1));
+    $$("#title1 span").forEach((el, i) => reveal(el, t, 1.5 + i * .09, { d: .7, y: 60 }));
+    reveal($("#sub1"), t, 2.6, { d: .9, y: 30 });
+    $("#rule1").style.width = 240 * inout(prog(t, 3.1, 1)) + "px";
+  },
+  s2(t) {
+    const r = $$("#s2 .r");
+    reveal(r[0], t, .4); reveal(r[1], t, .6, { y: 50 });
+    $$("#s2 .lead div").forEach((el, i) => reveal(el, t, 1.4 + i * .5, { y: 24 }));
+    $$("#s2 .pill").forEach((el, i) => reveal(el, t, 2.4 + i * .45, { x: 80, y: 0, s: .96 }));
+  },
+  s3(t) {
+    reveal($("#s3 .kicker"), t, .4); reveal($("#s3 .h2"), t, .6, { y: 50 });
+    $$("#grid .card").forEach((el, i) => reveal(el, t, 1.3 + i * .32, { d: .8, y: 50, s: .92, ease: back }));
+  },
+  s4(t) {
+    reveal($("#s4 .kicker"), t, .3); reveal($("#s4 .h2"), t, .5, { y: 50 }); reveal($("#s4 .lead"), t, .9, { y: 24 });
+    reveal($("#chat"), t, .5, { d: 1, y: 60, s: .96 });
+    reveal($("#q4"), t, 1.4, { y: 24, x: 30, s: .9, ease: back });
+    reveal($("#a4"), t, 2.2, { y: 20 });
+    const txt = $("#a4txt");
+    const aiSpark = $("#a4 svg");
+    if (t < 3.3) {
+      txt.innerHTML = '<div class="dots"><i></i><i></i><i></i></div>';
+      $$(".dots i", txt).forEach((d, i) => { d.style.opacity = .3 + .7 * Math.max(0, Math.sin(t * 7 - i * .9)); });
+      drawSpark(aiSpark, 1, t * 120, 1);
+    } else {
+      typeInto(txt, ANSWER, t, 3.3, 11);
+      drawSpark(aiSpark, 1, 3.3 * 120 + (t - 3.3) * 8, 0);
+    }
+  },
+  s5(t) {
+    reveal($("#s5 .kicker"), t, .3); reveal($("#s5 .h2"), t, .5, { y: 50 });
+    $$("#models .model").forEach((el, i) => {
+      reveal(el, t, 1.2 + i * .35, { y: 60, s: .95 });
+      $$(".fill", el).forEach((f, j) => { f.style.width = (100 * +f.dataset.v * inout(prog(t, 2 + i * .35 + j * .2, 1.4))) + "%"; });
+    });
+    reveal($("#note5"), t, 3.6, { y: 0 });
+  },
+  s6(t) {
+    reveal($("#s6 .kicker"), t, .3); reveal($("#s6 .h2"), t, .5, { y: 50 });
+    $$("#where .where").forEach((el, i) => reveal(el, t, 1.2 + i * .35, { y: 60, s: .95 }));
+    const n = Array.from(CMD);
+    const k = Math.max(0, Math.min(n.length, Math.floor((t - 2.8) * 12)));
+    $("#cmd6").textContent = n.slice(0, k).join("");
+    $("#caret6").style.opacity = (k < n.length || Math.floor(t * 2) % 2 === 0) ? 1 : 0;
+  },
+  s7(t) {
+    reveal($("#s7 .kicker"), t, .3); reveal($("#s7 .h2"), t, .5, { y: 50 });
+    $$("#vals .val").forEach((el, i) => reveal(el, t, 1.3 + i * .55, { y: 50, s: .85, ease: back }));
+    $("#vline").style.width = 1060 * inout(prog(t, 1.5, 1.6)) + "px";
+    reveal($("#cai"), t, 3.4, { y: 24 });
+  },
+  s8(t) {
+    drawSpark($("#logo8"), prog(t, .2, 1.2), t * 10, prog(t, 1.2, 1) * .6);
+    typeInto($("#hello"), HELLO, t, 1.3, 9, true);
+    reveal($("#help"), t, 3, { y: 24 });
+    reveal($("#url"), t, 3.7, { y: 20, s: .9, ease: back });
+  },
+};
+
+function render(t) {
+  // background drift
+  $("#b1").style.transform = `translate(${1250 + Math.sin(t * .23) * 160}px, ${-240 + Math.cos(t * .19) * 120}px)`;
+  $("#b2").style.transform = `translate(${-380 + Math.cos(t * .17) * 140}px, ${420 + Math.sin(t * .21) * 110}px)`;
+  $("#b3").style.transform = `translate(${800 + Math.sin(t * .13 + 1) * 260}px, ${600 + Math.cos(t * .11) * 90}px)`;
+
+  let chapter = 0;
+  SCENES.forEach((sc, i) => {
+    const el = S[sc.id];
+    const vis = Math.min(prog(t, sc.a, .6), 1 - prog(t, sc.b - .6, .6));
+    el.style.opacity = vis;
+    el.style.visibility = vis > 0 ? "visible" : "hidden";
+    if (vis > 0) update[sc.id](t - sc.a);
+    if (t >= sc.a) chapter = i;
+  });
+
+  // chrome (chapters 1-6)
+  const cv = Math.min(prog(t, 7, .6), 1 - prog(t, 57.4, .6));
+  $("#chrome").style.opacity = cv;
+  if (cv > 0) {
+    const brand = $("#brand svg");
+    drawSpark(brand, 1, t * 12, 0);
+    $("#pager").textContent = String(Math.min(6, Math.max(1, chapter))).padStart(2, "0") + " / 06";
+    $("#progress i").style.width = (100 * clamp((t - 7) / (58 - 7))) + "%";
+  }
+
+  $("#fade").style.opacity = prog(t, DURATION - 1, 1);
+}
+
+window.DURATION = DURATION;
+window.render = render;
+window.ready = document.fonts.ready.then(() => new Promise(r => setTimeout(r, 300)));
+render(0);
+</script>
+</body>
+</html>
