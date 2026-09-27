@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>MMAX2 Promo</title>
+<link href="fonts/fonts.css" rel="stylesheet">
+<style>
+  :root {
+    --bg: #07080A;
+    --fg: #F4F6F2;
+    --dim: rgba(244,246,242,.6);
+    --faint: rgba(244,246,242,.14);
+    --lime: #C8FF2E;
+    --lime2: #E6FF9A;
+    --cond: "Barlow Condensed", "Noto Sans SC", sans-serif;
+    --sans: "Noto Sans SC", sans-serif;
+    --mono: "JetBrains Mono", "Noto Sans SC", monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--bg); }
+  body { font-family: var(--sans); color: var(--fg); position: relative; -webkit-font-smoothing: antialiased; }
+  canvas#fx { position: absolute; inset: 0; }
+  #world { position: absolute; inset: 0; transform-origin: 50% 50%; }
+  .abs { position: absolute; }
+  .o { opacity: 0; }
+  .sk { transform: skewX(-10deg); }
+  .tag { font: 500 22px var(--mono); letter-spacing: 6px; color: var(--lime); white-space: nowrap; }
+  .slam { white-space: nowrap; will-change: transform, opacity, filter; }
+
+  /* bike */
+  #bikeWrap { position: absolute; left: 0; top: 0; width: 1200px; height: 640px; transform-origin: 0 0; }
+  #bike { width: 1200px; height: 640px; overflow: visible; }
+  #bike .ln { fill: none; stroke: var(--lime); stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }
+  #bike .part { stroke: rgba(244,246,242,.55); stroke-width: 2; stroke-linejoin: round; }
+  #bike .tube { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  #bike .acc { fill: none; stroke: var(--lime); stroke-width: 4; stroke-linecap: round; filter: url(#glow); }
+  #bike .fr { fill: none; stroke: var(--lime); stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; filter: url(#glow); }
+
+  /* S0 */
+  #check { left: 0; right: 0; top: 470px; text-align: center; font: 500 26px var(--mono); letter-spacing: 6px; color: var(--dim); white-space: pre; }
+  #check b { color: var(--lime); font-weight: 500; }
+
+  /* S1 */
+  #t1a { left: 0; right: 0; top: 96px; text-align: center; font: 900 96px var(--sans); letter-spacing: 18px; }
+  #t1b { left: 0; right: 0; top: 190px; text-align: center; font: italic 800 250px/1 var(--cond); letter-spacing: 6px; color: var(--lime); }
+  #t1c { left: 0; right: 0; top: 452px; text-align: center; }
+
+  /* S2 */
+  #rTag { left: 150px; top: 250px; }
+  #rNum { left: 130px; top: 290px; font: italic 800 400px/1 var(--cond); color: var(--lime); letter-spacing: -4px; }
+  #rNum small { font: italic 700 120px var(--cond); color: var(--fg); margin-left: 16px; letter-spacing: 2px; }
+  #cells { left: 150px; top: 720px; display: flex; gap: 10px; }
+  #cells i { width: 58px; height: 90px; border: 2px solid var(--faint); border-radius: 8px; display: block; }
+  #cells i.on { background: var(--lime); border-color: var(--lime); box-shadow: 0 0 22px rgba(200,255,46,.6); }
+  #cells::after { content: ""; width: 14px; height: 40px; margin-top: 25px; background: var(--faint); border-radius: 3px; }
+  #rSub { left: 150px; top: 850px; font: 500 40px var(--sans); letter-spacing: 6px; }
+  #rSub span { color: var(--lime); }
+
+  /* S3 / S4 / S6 big statements */
+  .big { left: 0; right: 0; text-align: center; top: 110px; }
+  .big .n { font: italic 800 230px/1 var(--cond); color: var(--lime); letter-spacing: 4px; }
+  .big .c { font: 900 110px/1.1 var(--sans); letter-spacing: 12px; }
+  .big .s { font: 500 30px var(--mono); letter-spacing: 8px; color: var(--dim); margin-top: 16px; }
+  .side { left: 150px; top: 330px; width: 820px; }
+  .side .tag { margin-bottom: 18px; }
+  .side .c { font: 900 104px/1.15 var(--sans); letter-spacing: 6px; }
+  .side .s { font: 300 36px var(--sans); color: var(--dim); margin-top: 18px; letter-spacing: 4px; }
+
+  /* S5 screen */
+  #scr { left: 410px; top: 230px; width: 1100px; height: 620px; border-radius: 40px; background: #0d0f12; border: 3px solid rgba(200,255,46,.5); box-shadow: 0 0 80px rgba(200,255,46,.18), inset 0 0 60px rgba(0,0,0,.8); overflow: hidden; transform-origin: 50% 50%; }
+  #scr .top { position: absolute; left: 50px; right: 50px; top: 34px; display: flex; justify-content: space-between; font: 500 22px var(--mono); letter-spacing: 4px; color: var(--dim); }
+  #scr .top b { color: var(--lime); font-weight: 500; }
+  #scr .spd { position: absolute; left: 60px; top: 110px; font: italic 800 300px/1 var(--cond); color: var(--fg); }
+  #scr .spd small { font: 500 32px var(--mono); color: var(--dim); letter-spacing: 4px; margin-left: 10px; font-style: normal; }
+  #scr .batt { position: absolute; left: 70px; bottom: 60px; width: 380px; height: 18px; border: 2px solid var(--faint); border-radius: 9px; }
+  #scr .batt i { position: absolute; left: 3px; top: 3px; bottom: 3px; width: 88%; border-radius: 6px; background: var(--lime); }
+  #scr .card { position: absolute; right: 60px; top: 110px; width: 480px; height: 420px; border-radius: 26px; background: #15181c; border: 1px solid var(--faint); padding: 36px; }
+  #scr .card .k { font: 500 22px var(--mono); letter-spacing: 5px; color: var(--lime); }
+  #scr .card .v { font: 900 64px var(--sans); margin-top: 20px; }
+  #scr .card .d { font: 300 30px var(--sans); color: var(--dim); margin-top: 12px; }
+  #scr .card svg { position: absolute; right: 36px; bottom: 36px; width: 150px; height: 150px; fill: none; stroke: var(--lime); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+  #scrT { left: 0; right: 0; top: 96px; text-align: center; }
+  #scrT .c { font: italic 800 96px var(--cond); color: var(--lime); letter-spacing: 4px; }
+  #scrT .c span { font: 900 72px var(--sans); color: var(--fg); letter-spacing: 8px; font-style: normal; margin-left: 20px; }
+  #scrS { left: 0; right: 0; top: 880px; text-align: center; font: 300 32px var(--sans); color: var(--dim); letter-spacing: 6px; }
+  #feat { left: 0; right: 0; top: 250px; text-align: center; }
+  #feat svg { width: 260px; height: 260px; fill: none; stroke: var(--lime); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 18px rgba(200,255,46,.6)); }
+  #feat .c { font: 900 120px var(--sans); letter-spacing: 10px; margin-top: 20px; }
+  #feat .n { font: 500 26px var(--mono); letter-spacing: 8px; color: var(--lime); margin-top: 10px; }
+  #chips { left: 0; right: 0; top: 900px; display: flex; justify-content: center; gap: 16px; }
+  .chip { font: 500 24px var(--sans); letter-spacing: 3px; padding: 10px 22px; border: 1px solid rgba(200,255,46,.5); border-radius: 999px; color: var(--fg); white-space: nowrap; }
+  #note5 { right: 110px; top: 980px; font: 400 18px var(--sans); color: rgba(244,246,242,.35); }
+
+  /* S6 colors */
+  #cols { left: 0; right: 0; top: 900px; display: flex; justify-content: center; gap: 28px; }
+  .sw { display: flex; align-items: center; gap: 14px; font: 500 28px var(--sans); letter-spacing: 4px; color: var(--dim); }
+  .sw i { width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--faint); display: block; }
+  .sw.on { color: var(--fg); }
+  .sw.on i { border-color: var(--lime); box-shadow: 0 0 0 5px rgba(200,255,46,.25); }
+
+  /* S7 */
+  #f1 { left: 0; right: 0; top: 70px; text-align: center; font: 900 92px var(--sans); letter-spacing: 16px; }
+  #f2 { left: 0; right: 0; top: 160px; text-align: center; font: italic 800 230px/1 var(--cond); color: var(--lime); letter-spacing: 8px; }
+  #f3 { left: 0; right: 0; top: 400px; text-align: center; font: 500 34px var(--sans); letter-spacing: 16px; color: var(--fg); }
+  #f4 { left: 0; right: 0; top: 930px; display: flex; justify-content: center; gap: 18px; }
+  #disc { left: 0; right: 0; top: 1000px; text-align: center; font: 400 17px var(--sans); color: rgba(244,246,242,.4); letter-spacing: 2px; }
+
+  /* HUD + post */
+  #hud { position: absolute; inset: 0; pointer-events: none; font: 500 18px var(--mono); letter-spacing: 4px; color: var(--dim); }
+  #hud .tl { position: absolute; left: 70px; top: 44px; color: var(--fg); } #hud .tl b { color: var(--lime); font-weight: 500; }
+  #hud .tr { position: absolute; right: 70px; top: 44px; }
+  #hud .bar { position: absolute; left: 70px; right: 70px; bottom: 40px; height: 3px; background: var(--faint); }
+  #hud .bar i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--lime); box-shadow: 0 0 10px var(--lime); }
+  #flash { position: absolute; inset: 0; background: #fff; opacity: 0; mix-blend-mode: overlay; }
+  #strobe { position: absolute; inset: 0; background: var(--lime); opacity: 0; mix-blend-mode: soft-light; }
+  #glitch { position: absolute; inset: 0; pointer-events: none; }
+  #glitch i { position: absolute; display: block; }
+  #vig { position: absolute; inset: 0; background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.75) 100%); }
+  #grain { position: absolute; left: -128px; top: -128px; width: 2176px; height: 1336px; opacity: .05; mix-blend-mode: screen; }
+  #black { position: absolute; inset: 0; background: #000; opacity: 1; }
+  #preload { position: absolute; opacity: 0; white-space: nowrap; }
+</style>
+</head>
+<body>
+<canvas id="fx" width="1920" height="1080"></canvas>
+
+<div id="world">
+  <div id="bikeWrap">
+    <svg id="bike" viewBox="0 0 1200 640">
+      <defs>
+        <linearGradient id="bodyG" x1="0" y1="0" x2="0" y2="1"><stop id="bg0" offset="0" stop-color="#23272c"/><stop id="bg1" offset="1" stop-color="#0b0c0e"/></linearGradient>
+        <linearGradient id="beamG" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#E6FF9A" stop-opacity=".75"/><stop offset="1" stop-color="#C8FF2E" stop-opacity="0"/></linearGradient>
+        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      <polygon id="beam" points="946,236 1700,120 1700,420 944,272" fill="url(#beamG)" opacity="0"/>
+      <!-- wheels -->
+      <g id="wR" transform="translate(300,470)">
+        <circle class="tire" r="112" fill="none" stroke="#15181b" stroke-width="24"/>
+        <circle class="ln wl" r="124" pathLength="1"/>
+        <circle class="ln wl" r="86" pathLength="1" style="stroke:#9aa3ab"/>
+        <g class="spk"></g>
+        <circle r="40" fill="#1a1d21" stroke="#C8FF2E" stroke-width="2.5"/>
+        <circle class="pulse" r="124" fill="none" stroke="#C8FF2E" stroke-width="3" opacity="0"/>
+      </g>
+      <g id="wF" transform="translate(920,470)">
+        <circle class="tire" r="112" fill="none" stroke="#15181b" stroke-width="24"/>
+        <circle class="ln wl" r="124" pathLength="1"/>
+        <circle class="ln wl" r="86" pathLength="1" style="stroke:#9aa3ab"/>
+        <g class="spk"></g>
+        <circle r="58" fill="none" stroke="#6c747c" stroke-width="6" stroke-dasharray="10 6"/>
+        <circle r="22" fill="#1a1d21" stroke="#C8FF2E" stroke-width="2.5"/>
+        <circle class="pulse" r="124" fill="none" stroke="#C8FF2E" stroke-width="3" opacity="0"/>
+      </g>
+      <!-- chassis -->
+      <path class="ln tube" pathLength="1" d="M300 470 L520 418" style="stroke:#3a4046; stroke-width:18"/>
+      <path class="ln tube" pathLength="1" d="M430 392 L338 468" style="stroke:#8b949c; stroke-width:12"/>
+      <path class="ln tube" pathLength="1" d="M902 250 L924 470" style="stroke:#9aa3ab; stroke-width:18"/>
+      <path class="ln tube" pathLength="1" d="M600 382 L650 456 L792 456 L815 420" style="stroke:#1e2226; stroke-width:28"/>
+      <path class="ln part fillp" pathLength="1" d="M169 422 A140 140 0 0 1 407 380 L400 396 A124 124 0 0 0 184 430 Z"/>
+      <path class="ln part fillp" pathLength="1" d="M813 380 A140 140 0 0 1 1041 400 L1026 410 A124 124 0 0 0 826 392 Z"/>
+      <path class="ln part fillp" pathLength="1" d="M150 350 L210 300 L300 286 L560 286 L612 300 L642 350 L602 382 L470 394 L340 396 L230 386 L170 372 Z"/>
+      <path class="ln part" pathLength="1" d="M228 286 L270 250 L330 238 L560 236 L602 252 L612 272 L592 286 Z" style="fill:#121416"/>
+      <path class="ln part fillp" pathLength="1" d="M790 442 L830 300 L850 215 L900 195 L936 210 L932 300 L896 402 L850 452 Z"/>
+      <path class="ln tube" pathLength="1" d="M885 205 L872 150" style="stroke:#9aa3ab; stroke-width:12"/>
+      <path class="ln tube" pathLength="1" d="M796 140 L952 158" style="stroke:#c9ced3; stroke-width:12"/>
+      <path class="ln tube" pathLength="1" d="M818 140 L798 92 L762 86" style="stroke:#9aa3ab; stroke-width:6"/>
+      <path class="ln part" pathLength="1" d="M846 136 L904 126 L912 160 L854 170 Z" style="fill:#0b0d0f"/>
+      <path id="hl" class="ln part" pathLength="1" d="M912 222 L948 236 L944 272 L910 262 Z" style="fill:#2a2f24"/>
+      <path id="tl" class="ln part" pathLength="1" d="M150 350 L162 330 L182 338 L170 360 Z" style="fill:#2a2f24"/>
+      <g id="xray" opacity="0">
+        <path class="fr" pathLength="1" d="M300 470 L520 404 L646 338 L902 226"/>
+        <path class="fr" pathLength="1" d="M338 398 L560 332 L624 290 L900 212"/>
+        <path class="fr" pathLength="1" d="M650 456 L700 380 L902 238"/>
+      </g>
+      <g id="accs" opacity="0">
+        <path class="acc" d="M232 330 L560 318 L614 334"/>
+        <path class="acc" d="M842 300 L900 288"/>
+        <path class="acc" d="M662 440 L782 440"/>
+      </g>
+    </svg>
+  </div>
+
+  <!-- S0 -->
+  <div id="check" class="abs"></div>
+  <!-- S1 -->
+  <div id="t1a" class="abs slam o">九号 · 机械师</div>
+  <div id="t1b" class="abs slam o"><span class="sk" style="display:inline-block">MMAX2</span></div>
+  <div id="t1c" class="abs tag slam o" style="text-align:center">新国标电动自行车 · NEW NATIONAL STANDARD E-BIKE</div>
+  <!-- S2 -->
+  <div id="rTag" class="abs tag o">RANGE · 续航里程</div>
+  <div id="rNum" class="abs slam o"><span id="rN">0</span><small>km</small></div>
+  <div id="cells" class="abs o"></div>
+  <div id="rSub" class="abs slam o"><span>48V 30Ah</span> 锂电池</div>
+  <!-- S3 -->
+  <div class="abs big slam o" id="m0"><div class="c">九号定制无刷电机</div><div class="s">CUSTOM BRUSHLESS MOTOR</div></div>
+  <div class="abs big slam o" id="m1"><div class="n sk">400W</div><div class="s">整机额定功率 · RATED POWER</div></div>
+  <div class="abs big slam o" id="m2"><div class="n sk">25<span style="font-size:110px">km/h</span></div><div class="s">新国标限速 · SPEED LIMIT</div></div>
+  <!-- S4 -->
+  <div id="shade" class="abs o" style="left:0; top:0; width:1200px; height:1080px; background:linear-gradient(90deg, rgba(7,8,10,.94) 0%, rgba(7,8,10,.8) 55%, rgba(7,8,10,0) 100%)"></div>
+  <div class="abs side slam o" id="a0"><div class="tag">ABS</div><div class="c">双通道<br>阀式 ABS</div><div class="s">紧急制动，稳住车身</div></div>
+  <div class="abs side slam o" id="a1"><div class="tag">TCS</div><div class="c">TCS<br>牵引力控制</div><div class="s">湿滑路面，减少打滑</div></div>
+  <div class="abs side slam o" id="a2"><div class="tag">FRONT FORK</div><div class="c">31 芯<br>前减震</div><div class="s">过坎更从容</div></div>
+  <div class="abs side slam o" id="a3"><div class="tag">REAR SHOCK</div><div class="c">五级可调<br>后减震</div><div class="s">按路况与载重调节</div></div>
+  <!-- S5 -->
+  <div id="scrT" class="abs slam o"><div class="c">RideyFun<span>智驾系统</span></div></div>
+  <div id="scr" class="abs o">
+    <div class="top"><span><b>●</b> RIDEYFUN</span><span>12:08</span></div>
+    <div class="spd">25<small>km/h</small></div>
+    <div class="batt"><i></i></div>
+    <div class="card"><div class="k" id="ck"></div><div class="v" id="cv"></div><div class="d" id="cd"></div><svg viewBox="0 0 48 48" id="ci"></svg></div>
+  </div>
+  <div id="scrS" class="abs o">5 英寸 TFT 全贴合彩屏 · 听歌 · 导航 · 通话</div>
+  <div id="feat" class="abs slam o"><svg viewBox="0 0 48 48" id="fi"></svg><div class="c" id="fc"></div><div class="n" id="fn"></div></div>
+  <div id="chips" class="abs"></div>
+  <div id="note5" class="abs o">* 屏幕界面为示意</div>
+  <!-- S6 -->
+  <div class="abs side slam o" id="b0" style="top:120px"><div class="tag">FRAME</div><div class="c">HC420 合金钢<br>双弓形复合车架</div></div>
+  <div class="abs side slam o" id="b1" style="top:120px"><div class="tag">TIRES</div><div class="c">玛吉斯<br>运动型轮胎</div></div>
+  <div class="abs big slam o" id="cn" style="top:90px"><div class="c" id="cnT"></div><div class="s" id="cnS"></div></div>
+  <div id="cols" class="abs o">
+    <div class="sw"><i style="background:#c9ced3"></i>幻影银</div>
+    <div class="sw"><i style="background:#f2f4f5"></i>光谱白</div>
+    <div class="sw"><i style="background:#16191c"></i>战斗黑</div>
+  </div>
+  <!-- S7 -->
+  <div id="f1" class="abs slam o">九号机械师</div>
+  <div id="f2" class="abs slam o"><span class="sk" style="display:inline-block">MMAX2</span></div>
+  <div id="f3" class="abs slam o">动力 · 安全 · 智能</div>
+  <div id="f4" class="abs o"><span class="chip">85km 续航</span><span class="chip">双通道 ABS + TCS</span><span class="chip">RideyFun 智驾系统</span><span class="chip">整车 OTA</span></div>
+  <div id="disc" class="abs o">非官方宣传片 · 车辆为风格化示意图 · 参数来自 2024 年 8 月发布会公开信息</div>
+</div>
+
+<div id="hud"><div class="tl"><b>▲</b> MMAX2 // PROMO</div><div class="tr" id="tc"></div><div class="bar"><i></i></div></div>
+<div id="glitch"></div>
+<div id="flash"></div>
+<div id="strobe"></div>
+<canvas id="grain" width="512" height="512"></canvas>
+<div id="vig"></div>
+<div id="black"></div>
+<div id="preload"></div>
+
+<script>
+/* ============================== timing ============================== */
+const FPS = 30, W = 1920, H = 1080;
+const BPM = 128, BEAT = 60 / BPM, BAR = BEAT * 4;
+const bar = n => n * BAR, beat = n => n * BEAT;
+const DURATION = 32;
+const SEC = { ign: 0, reveal: bar(1), range: bar(3), ride: bar(5), safe: bar(7), smart: bar(9), feat: bar(10), build: bar(12), color: bar(13), fin: bar(14) };
+const HITS = [SEC.reveal, SEC.range, SEC.ride, SEC.safe, SEC.smart, SEC.build, SEC.fin];
+
+const FEATURES = [
+  { c: "感应解锁 3.0", n: "PROXIMITY UNLOCK", icon: '<rect x="15" y="8" width="18" height="32" rx="3"/><path d="M21 35h6"/><path d="M37 16c3 3 3 13 0 16M41 12c5 5 5 19 0 24"/>' },
+  { c: "一键倒车", n: "ONE-TOUCH REVERSE", icon: '<path d="M34 34V22a8 8 0 0 0-8-8H12"/><path d="M18 8l-6 6 6 6"/>' },
+  { c: "驻车感应 2.0", n: "PARKING SENSE", icon: '<circle cx="24" cy="24" r="16"/><path d="M19 32V16h7a5 5 0 0 1 0 10h-7"/>' },
+  { c: "乘坐感应 2.0", n: "SEAT SENSE", icon: '<circle cx="24" cy="11" r="5"/><path d="M16 40l3-14h10l3 14M14 26h20"/>' },
+  { c: "黑匣子 + 事故主动求救", n: "BLACK BOX + SOS", icon: '<rect x="9" y="14" width="30" height="22" rx="3"/><path d="M15 25h4M22 25h4M29 25h4"/><path d="M24 8v6"/>' },
+  { c: "整车 OTA", n: "OVER-THE-AIR UPDATE", icon: '<path d="M14 34a8 8 0 0 1 1-16 11 11 0 0 1 21 3 7 7 0 0 1-2 13"/><path d="M24 22v16M18 32l6 6 6-6"/>' },
+];
+const CARDS = [
+  { k: "NAVIGATION", v: "导航", d: "前方 200m 右转", icon: '<path d="M24 6l14 34-14-8-14 8z"/>' },
+  { k: "MUSIC", v: "听歌", d: "正在播放 ▸ 01:24", icon: '<path d="M18 36V12l20-4v24"/><circle cx="14" cy="36" r="4"/><circle cx="34" cy="32" r="4"/>' },
+  { k: "CALL", v: "通话", d: "来电 · 接听", icon: '<path d="M14 8l6 2 2 8-4 3a20 20 0 0 0 9 9l3-4 8 2 2 6c-1 3-4 5-7 5A30 30 0 0 1 9 15c0-3 2-6 5-7z"/>' },
+];
+const COLORS = [
+  { n: "幻影银", e: "PHANTOM SILVER", g: ["#d4d9de", "#7a828a"] },
+  { n: "光谱白", e: "SPECTRUM WHITE", g: ["#f6f7f8", "#b9bfc5"] },
+  { n: "战斗黑", e: "COMBAT BLACK", g: ["#23272c", "#0b0c0e"] },
+];
+const CHECK = ["BATTERY", "MOTOR", "ABS", "TCS"];
+
+/* ============================== utils ============================== */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const clamp = x => Math.max(0, Math.min(1, x));
+const prog = (t, a, d) => clamp((t - a) / d);
+const out3 = x => 1 - Math.pow(1 - x, 3);
+const out5 = x => 1 - Math.pow(1 - x, 5);
+const in3 = x => x * x * x;
+const inout = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const outBack = x => { const c = 2.2; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+const lerp = (a, b, k) => a + (b - a) * k;
+function hash(a, b = 0) { let h = Math.imul((a | 0) ^ 0x9e3779b9, 374761393) + Math.imul(b | 0, 668265263); h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
+function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function kf(list, t) {
+  if (t <= list[0][0]) return { ...list[0][1] };
+  for (let i = 0; i < list.length - 1; i++) {
+    const [t0, v0] = list[i], [t1, v1] = list[i + 1];
+    if (t <= t1) { const k = inout((t - t0) / (t1 - t0)); const o = {}; for (const key in v0) o[key] = lerp(v0[key], v1[key] ?? v0[key], k); return o; }
+  }
+  return { ...list[list.length - 1][1] };
+}
+/* slam in: scale from big with blur + RGB split; quick slice out */
+function slam(el, t, a, b, { from = 1.7, xd = .14, x = 0, y = 0 } = {}) {
+  if (t < a || t > b) { el.style.opacity = 0; return false; }
+  const k = prog(t, a, .2), ko = prog(t, b - xd, xd), f = Math.floor(t * FPS);
+  const s = lerp(from, 1, outBack(k)), rgb = 14 * (1 - prog(t, a, .35));
+  let clip = "", dx = 0;
+  if (ko > 0) { clip = `inset(${100 * in3(ko) * hash(f, 3)}% 0 ${100 * in3(ko) * hash(f, 5)}% 0)`; dx = (hash(f, 7) - .5) * 90 * ko; }
+  el.style.opacity = clamp(k * 3) * (1 - ko);
+  el.style.transform = `translate(${x + dx}px, ${y}px) scale(${s})`;
+  el.style.filter = k < 1 ? `blur(${(1 - k) * 10}px)` : "";
+  el.style.textShadow = rgb > .3 ? `${-rgb}px 0 rgba(255,40,110,.7), ${rgb}px 0 rgba(0,230,255,.7)` : "";
+  el.style.clipPath = clip;
+  return true;
+}
+function fadeIn(el, t, a, b, d = .3) { if (t < a || t > b) { el.style.opacity = 0; return false; } el.style.opacity = prog(t, a, d) * (1 - prog(t, b - .15, .15)); el.style.transform = `translateY(${(1 - out3(prog(t, a, d))) * 20}px)`; return true; }
+
+/* ============================== bike ============================== */
+function spokes(g, n, r0, r1) {
+  const NS = "http://www.w3.org/2000/svg";
+  for (let i = 0; i < n; i++) {
+    const a = i / n * Math.PI * 2;
+    for (const off of [-.12, .12]) {
+      const l = document.createElementNS(NS, "line");
+      l.setAttribute("x1", Math.cos(a) * r0); l.setAttribute("y1", Math.sin(a) * r0);
+      l.setAttribute("x2", Math.cos(a + off) * r1); l.setAttribute("y2", Math.sin(a + off) * r1);
+      l.setAttribute("stroke", "#9aa3ab"); l.setAttribute("stroke-width", 5); l.setAttribute("stroke-linecap", "round");
+      g.appendChild(l);
+    }
+  }
+}
+$$("#bike .spk").forEach(g => spokes(g, 5, 30, 84));
+const LN = $$("#bike .ln");
+// camera on the bike: svg point (px,py) lands on screen (sx,sy) at scale s
+const BIKE = [
+  [0,               { px: 600, py: 380, sx: 960, sy: 700, s: .82, o: 0 }],
+  [SEC.reveal - .01, { px: 600, py: 380, sx: 960, sy: 760, s: .78, o: 0 }],
+  [SEC.reveal,      { px: 600, py: 380, sx: 960, sy: 760, s: .78, o: 1 }],
+  [SEC.range - .3,  { px: 600, py: 380, sx: 960, sy: 750, s: .82, o: 1 }],
+  [SEC.range + .35, { px: 600, py: 380, sx: 1480, sy: 690, s: .58, o: .55 }],
+  [SEC.ride - .3,   { px: 600, py: 380, sx: 1500, sy: 690, s: .6, o: .55 }],
+  [SEC.ride + .3,   { px: 600, py: 380, sx: 960, sy: 700, s: .9, o: 1 }],
+  [SEC.safe - .25,  { px: 600, py: 380, sx: 960, sy: 700, s: .92, o: 1 }],
+  [SEC.safe + .35,  { px: 920, py: 470, sx: 1340, sy: 560, s: 2.1, o: 1 }],
+  [SEC.safe + beat(6) - .25, { px: 920, py: 470, sx: 1320, sy: 560, s: 2.2, o: 1 }],
+  [SEC.safe + beat(6) + .2,  { px: 390, py: 430, sx: 1400, sy: 560, s: 2.2, o: 1 }],
+  [SEC.smart - .3,  { px: 390, py: 430, sx: 1300, sy: 560, s: 2.25, o: 1 }],
+  [SEC.smart + .45, { px: 880, py: 148, sx: 960, sy: 540, s: 9, o: 0 }],
+  [SEC.build - .3,  { px: 600, py: 380, sx: 1100, sy: 700, s: .9, o: 0 }],
+  [SEC.build + .1,  { px: 600, py: 380, sx: 1120, sy: 680, s: .95, o: 1 }],
+  [SEC.color,       { px: 600, py: 380, sx: 1080, sy: 690, s: .95, o: 1 }],
+  [SEC.color + .3,  { px: 600, py: 380, sx: 960, sy: 640, s: .9, o: 1 }],
+  [SEC.fin - .2,    { px: 600, py: 380, sx: 960, sy: 640, s: .9, o: 1 }],
+  [SEC.fin + .25,   { px: 600, py: 380, sx: 900, sy: 740, s: .78, o: 1 }],
+  [DURATION,        { px: 600, py: 380, sx: 930, sy: 740, s: .8, o: 1 }],
+];
+const SPEED = [[0, { v: 0 }], [SEC.reveal, { v: .3 }], [SEC.range, { v: .5 }], [SEC.ride, { v: 5 }], [SEC.safe, { v: 1.2 }], [SEC.smart, { v: .6 }], [SEC.build, { v: .5 }], [SEC.fin, { v: 2.4 }], [SEC.fin + 1.5, { v: .7 }], [DURATION, { v: .6 }]];
+const DIST = new Map();
+function dist(t) { const k = Math.round(t * 30); if (k <= 0) return 0; if (!DIST.has(k)) DIST.set(k, dist((k - 1) / 30) + kf(SPEED, k / 30).v / 30); return DIST.get(k); }
+let BK = BIKE[0][1];
+function bikeToScreen(px, py) { return [BK.sx + (px - BK.px) * BK.s, BK.sy + (py - BK.py) * BK.s]; }
+
+function updateBike(t) {
+  BK = kf(BIKE, t);
+  const bounce = kf(SPEED, t).v > 2 ? Math.sin(t * 38) * 2.5 : 0;
+  const X = BK.sx - BK.px * BK.s, Y = BK.sy - BK.py * BK.s + bounce;
+  const wrap = $("#bikeWrap");
+  wrap.style.transform = `translate(${X}px, ${Y}px) scale(${BK.s})`;
+  wrap.style.opacity = BK.o;
+  // line draw-on during reveal
+  const dr = t < SEC.reveal + 3 ? t : 99;
+  LN.forEach((el, i) => { const k = out3(prog(dr, SEC.reveal + .1 + i * .07, .7)); el.style.strokeDasharray = 1; el.style.strokeDashoffset = 1 - k; });
+  const fillK = prog(t, SEC.reveal + 1.35, .5);
+  $$("#bike .fillp").forEach(p => { p.style.fill = `url(#bodyG)`; p.style.fillOpacity = fillK * (inXray(t) ? .18 : 1); });
+  $$("#bike .tire").forEach(c => c.style.opacity = fillK);
+  $("#accs").style.opacity = prog(t, SEC.reveal + 1.6, .3);
+  // headlight + beam
+  const hlOn = t > SEC.reveal + 1.87 ? 1 : 0, flick = t < SEC.reveal + 2.1 && hash(Math.floor(t * 30), 2) > .5 ? .2 : 1;
+  $("#hl").style.fill = hlOn ? "#F2FFD0" : "#2a2f24"; $("#hl").style.filter = hlOn ? "url(#glow)" : "";
+  $("#tl").style.fill = hlOn ? "#C8FF2E" : "#2a2f24";
+  const beamO = hlOn * flick * (t > SEC.smart && t < SEC.fin ? .35 : .8);
+  $("#beam").setAttribute("opacity", beamO);
+  // wheel spin
+  const ang = dist(t) * 180 / Math.PI * 1.1;
+  $$("#bike .spk").forEach(g => g.setAttribute("transform", `rotate(${ang})`));
+  // ABS pulses on front wheel, TCS on rear
+  $$("#bike .pulse").forEach((c, i) => {
+    const on = i === 1 && t > SEC.safe && t < SEC.safe + beat(4);   // ABS + TCS pulses on the front wheel
+    const ph = ((t - SEC.safe) / BEAT) % 1;
+    c.setAttribute("r", 124 + ph * 70); c.setAttribute("opacity", on ? (1 - ph) * .9 : 0);
+  });
+  // x-ray frame + color variants
+  const xr = inXray(t) ? 1 : 0;
+  $("#xray").setAttribute("opacity", xr);
+  $$("#xray path").forEach((p, i) => { const k = out3(prog(t, SEC.build + .1 + i * .15, .5)); p.style.strokeDasharray = 1; p.style.strokeDashoffset = 1 - k; });
+  let ci = 2;
+  if (t >= SEC.color && t < SEC.fin) ci = Math.min(2, Math.floor((t - SEC.color) / beat(1.333)));
+  $("#bg0").setAttribute("stop-color", COLORS[ci].g[0]); $("#bg1").setAttribute("stop-color", COLORS[ci].g[1]);
+  const tirePulse = t > SEC.build + beat(2) && t < SEC.color ? .5 + .5 * Math.sin((t - SEC.build) * 14) : 0;
+  $$("#bike .wl").forEach(c => { c.style.stroke = tirePulse ? `rgba(200,255,46,${.4 + .6 * tirePulse})` : ""; });
+}
+const inXray = t => t >= SEC.build && t < SEC.color;
+
+/* ============================== canvas ============================== */
+const cv = $("#fx"), g = cv.getContext("2d"), rnd = mulberry(3);
+const STREAKS = Array.from({ length: 90 }, () => ({ y: rnd(), x: rnd(), l: .3 + rnd(), w: .5 + rnd() * 2.5, b: rnd() }));
+const SPARKS = Array.from({ length: 140 }, () => ({ a: rnd() * 6.28, v: .4 + rnd(), s: rnd() }));
+function drawBg(t) {
+  g.fillStyle = "#07080A"; g.fillRect(0, 0, W, H);
+  const v = kf(SPEED, t).v, d = dist(t);
+  const gc = bikeToScreen(600, 380);
+  const bg = g.createRadialGradient(gc[0], gc[1], 0, gc[0], gc[1], 1000);
+  bg.addColorStop(0, `rgba(120,160,20,${.16 * BK.o + .04})`); bg.addColorStop(1, "rgba(7,8,10,0)");
+  g.fillStyle = bg; g.fillRect(0, 0, W, H);
+  // floor grid (world space, follows bike ground line)
+  const gy = bikeToScreen(0, 588)[1], ga = (t > SEC.reveal ? .5 : 0) * (BK.s < 1.5 ? 1 : .35);
+  if (ga > 0 && gy < H) {
+    g.lineWidth = 1;
+    for (let i = -14; i <= 14; i++) {
+      const x0 = W / 2 + i * 40, x1 = W / 2 + i * 260;
+      g.strokeStyle = `rgba(200,255,46,${ga * .22})`; g.beginPath(); g.moveTo(x0, gy); g.lineTo(x1, H); g.stroke();
+    }
+    const off = (d * .5) % 1;
+    for (let k = 0; k < 12; k++) {
+      const z = k + 1 - off, y = gy + 260 / z; if (y > H || y < gy) continue;
+      g.strokeStyle = `rgba(200,255,46,${ga * .3 * clamp((y - gy) / 180)})`; g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke();
+    }
+    g.strokeStyle = `rgba(200,255,46,${ga * .7})`; g.lineWidth = 2; g.beginPath(); g.moveTo(0, gy); g.lineTo(W, gy); g.stroke();
+  }
+  // speed streaks
+  const sa = clamp((v - .8) / 3);
+  if (sa > 0) {
+    for (const s of STREAKS) {
+      const x = ((s.x - d * .35 * (.6 + s.b)) % 1 + 1) % 1 * (W + 800) - 400, y = s.y * H, len = s.l * 500 * sa;
+      const gr = g.createLinearGradient(x, 0, x + len, 0);
+      gr.addColorStop(0, "rgba(200,255,46,0)"); gr.addColorStop(1, `rgba(${s.b > .7 ? "244,246,242" : "200,255,46"},${.55 * sa})`);
+      g.strokeStyle = gr; g.lineWidth = s.w; g.beginPath(); g.moveTo(x, y); g.lineTo(x + len, y); g.stroke();
+    }
+  }
+  // sparks burst at hits
+  for (const h of HITS) {
+    const u = t - h; if (u < 0 || u > .9) continue;
+    const c = h === SEC.fin ? bikeToScreen(946, 250) : [W / 2, H / 2];
+    for (const p of SPARKS) {
+      const r = out3(clamp(u / .9)) * 900 * p.v, x = c[0] + Math.cos(p.a) * r, y = c[1] + Math.sin(p.a) * r * .6;
+      g.fillStyle = `rgba(${p.s > .5 ? "200,255,46" : "244,246,242"},${(1 - u / .9) * .9})`; g.fillRect(x, y, 3, 3);
+    }
+  }
+  // ignition line
+  if (t > 1.2 && t < SEC.reveal + .3) {
+    const k = out5(prog(t, 1.25, .45)), o = 1 - prog(t, SEC.reveal, .3);
+    g.fillStyle = `rgba(230,255,154,${o})`; g.shadowColor = "#C8FF2E"; g.shadowBlur = 30;
+    g.fillRect(W / 2 - k * W * .6, H / 2 - 2, k * W * 1.2, 4); g.shadowBlur = 0;
+  }
+}
+
+/* ============================== setup ============================== */
+for (let i = 0; i < 10; i++) $("#cells").appendChild(document.createElement("i"));
+$("#chips").innerHTML = FEATURES.map(f => `<span class="chip o">${f.c}</span>`).join("");
+for (let i = 0; i < 14; i++) $("#glitch").appendChild(document.createElement("i"));
+{ const gc = $("#grain").getContext("2d"), im = gc.createImageData(512, 512), r = mulberry(9); for (let i = 0; i < im.data.length; i += 4) { const v = r() * 255; im.data[i] = im.data[i + 1] = im.data[i + 2] = v; im.data[i + 3] = 255; } gc.putImageData(im, 0, 0); }
+$("#preload").textContent = FEATURES.map(f => f.c + f.n).join("") + CARDS.map(c => c.k + c.v + c.d).join("") + COLORS.map(c => c.n + c.e).join("") + CHECK.join("") + "SYSTEM CHECK OK▸●0123456789km/h:";
+
+/* ============================== scenes ============================== */
+function scenes(t) {
+  // S0 ignition check
+  if (t < SEC.reveal) {
+    const n = Math.min(CHECK.length, Math.floor(t / .28));
+    $("#check").innerHTML = "SYSTEM CHECK  " + CHECK.slice(0, n).map(c => `${c} <b>OK</b>`).join("  ▸  ");
+    $("#check").style.opacity = 1 - prog(t, 1.3, .3);
+  } else $("#check").style.opacity = 0;
+  // S1 reveal
+  slam($("#t1a"), t, SEC.reveal + beat(1), SEC.range, { from: 1.4 });
+  slam($("#t1b"), t, SEC.reveal + beat(2), SEC.range, { from: 2 });
+  slam($("#t1c"), t, SEC.reveal + beat(6), SEC.range, { from: 1.2 });
+  // S2 range
+  fadeIn($("#rTag"), t, SEC.range, SEC.ride);
+  if (slam($("#rNum"), t, SEC.range, SEC.ride, { from: 1.3 })) $("#rN").textContent = Math.round(85 * out3(prog(t, SEC.range + .05, beat(3))));
+  const cellsN = Math.round(10 * out3(prog(t, SEC.range + .05, beat(3))));
+  fadeIn($("#cells"), t, SEC.range + .1, SEC.ride); $$("#cells i").forEach((c, i) => c.classList.toggle("on", i < cellsN));
+  slam($("#rSub"), t, SEC.range + beat(4), SEC.ride, { from: 1.3 });
+  // S3 ride: statement per 2 beats... per bar-half
+  [0, 1, 2].forEach(i => { const a = SEC.ride + beat(i * 2.667); slam($("#m" + i), t, a, i < 2 ? SEC.ride + beat((i + 1) * 2.667) : SEC.safe); });
+  // S4 safety: one per 2 beats
+  fadeIn($("#shade"), t, SEC.safe + .2, SEC.smart, .3);
+  [0, 1, 2, 3].forEach(i => slam($("#a" + i), t, SEC.safe + beat(i * 2), SEC.safe + beat(i * 2 + 2), { from: 1.3, x: 0 }));
+  // S5 smart: screen
+  slam($("#scrT"), t, SEC.smart + .15, SEC.feat, { from: 1.3 });
+  const scr = $("#scr");
+  if (t >= SEC.smart + .25 && t < SEC.feat) {
+    const k = out5(prog(t, SEC.smart + .25, .45)), ko = in3(prog(t, SEC.feat - .2, .2));
+    scr.style.opacity = clamp(k * 2) * (1 - ko); scr.style.transform = `scale(${lerp(.2, 1, k) * (1 + ko * .3)})`;
+    const ci = Math.min(2, Math.floor((t - SEC.smart - .3) / BEAT / 1.2));
+    const c = CARDS[Math.max(0, ci)]; $("#ck").textContent = c.k; $("#cv").textContent = c.v; $("#cd").textContent = c.d; $("#ci").innerHTML = c.icon;
+    const card = $("#scr .card"), cp = ((t - SEC.smart - .3) / BEAT / 1.2) % 1;
+    card.style.transform = `translateY(${cp < .15 ? (1 - out3(cp / .15)) * 40 : 0}px)`; card.style.opacity = cp < .15 ? out3(cp / .15) : 1;
+  } else scr.style.opacity = 0;
+  fadeIn($("#scrS"), t, SEC.smart + .5, SEC.feat);
+  // S5 features: one per beat
+  const fi = Math.floor((t - SEC.feat) / BEAT);
+  if (t >= SEC.feat && t < SEC.build) {
+    const idx = Math.min(5, fi), a = SEC.feat + beat(idx), b = idx < 5 ? a + BEAT : SEC.build;
+    $("#fi").innerHTML = FEATURES[idx].icon; $("#fc").textContent = FEATURES[idx].c; $("#fn").textContent = FEATURES[idx].n;
+    slam($("#feat"), t, a, b, { from: 1.5, xd: .08 });
+  } else $("#feat").style.opacity = 0;
+  $$("#chips .chip").forEach((c, i) => fadeIn(c, t, SEC.feat + beat(i) + .1, SEC.build, .2));
+  fadeIn($("#note5"), t, SEC.smart + .5, SEC.build);
+  // S6 build
+  slam($("#b0"), t, SEC.build + .05, SEC.build + beat(2), { from: 1.3 });
+  slam($("#b1"), t, SEC.build + beat(2), SEC.color, { from: 1.3 });
+  if (t >= SEC.color && t < SEC.fin) {
+    const ci = Math.min(2, Math.floor((t - SEC.color) / beat(1.333))), a = SEC.color + beat(ci * 1.333);
+    $("#cnT").textContent = COLORS[ci].n; $("#cnS").textContent = COLORS[ci].e;
+    slam($("#cn"), t, a, ci < 2 ? a + beat(1.333) : SEC.fin, { from: 1.4, xd: .08 });
+    $$("#cols .sw").forEach((s, i) => s.classList.toggle("on", i === ci));
+  } else $("#cn").style.opacity = 0;
+  fadeIn($("#cols"), t, SEC.color, SEC.fin);
+  // S7 finale
+  slam($("#f1"), t, SEC.fin + beat(1), 99, { from: 1.4 });
+  slam($("#f2"), t, SEC.fin + beat(2), 99, { from: 2 });
+  slam($("#f3"), t, SEC.fin + beat(4), 99, { from: 1.2 });
+  fadeIn($("#f4"), t, SEC.fin + beat(6), 99, .4);
+  fadeIn($("#disc"), t, SEC.fin + beat(8), 99, .5);
+}
+
+/* ============================== frame ============================== */
+function render(t) {
+  updateBike(t);
+  drawBg(t);
+  scenes(t);
+  // beat pulse (from the drop to the finale) + hit shake
+  let pulse = 0; if (t >= SEC.range && t < DURATION - 1) { const u = ((t - SEC.range) % BEAT); pulse = .014 * Math.exp(-u * 12); }
+  let sx = 0, sy = 0; for (const h of HITS) if (t >= h && t < h + .6) { const e = Math.exp(-(t - h) * 9); sx += Math.sin(t * 97 + h) * e * 20; sy += Math.cos(t * 83 + h) * e * 14; }
+  $("#world").style.transform = `translate(${sx}px, ${sy}px) scale(${1 + pulse})`;
+  // flash + strobe
+  let fl = 0; for (const h of HITS) if (t >= h && t < h + .3) fl = Math.max(fl, 1 - (t - h) / .3);
+  $("#flash").style.opacity = fl * .8;
+  $("#strobe").style.opacity = t > SEC.feat && t < SEC.build ? .12 * Math.exp(-((t - SEC.feat) % BEAT) * 14) : 0;
+  // glitch slices around hits
+  let gk = 0; for (const h of HITS) { const d = Math.abs(t - h); if (d < .22) gk = Math.max(gk, 1 - d / .22); }
+  const f = Math.floor(t * FPS), sl = $("#glitch").children;
+  for (let i = 0; i < sl.length; i++) {
+    const el = sl[i]; if (!(gk > 0 && hash(f, i) < gk * .9)) { el.style.opacity = 0; continue; }
+    Object.assign(el.style, { opacity: .4 + .6 * hash(f, i + 50), top: hash(f, i + 100) * H + "px", height: 2 + hash(f, i + 150) * 40 + "px", width: 20 + hash(f, i + 200) * 80 + "%", left: hash(f, i + 250) * 40 + "%", background: hash(f, i + 300) > .5 ? "rgba(200,255,46,.85)" : "rgba(244,246,242,.7)" });
+  }
+  // HUD
+  $("#hud").style.opacity = Math.min(prog(t, SEC.reveal, .3), 1 - prog(t, DURATION - 1.5, .8));
+  const ss = Math.floor(t); $("#tc").textContent = `00:${String(ss).padStart(2, "0")}:${String(f % FPS).padStart(2, "0")}`;
+  $("#hud .bar i").style.width = 100 * t / DURATION + "%";
+  $("#grain").style.transform = `translate(${hash(f, 1) * 128}px, ${hash(f, 2) * 128}px)`;
+  $("#black").style.opacity = Math.max(1 - prog(t, 0, .4), prog(t, DURATION - 1, 1));
+}
+
+window.DURATION = DURATION;
+window.render = render;
+window.ready = document.fonts.ready.then(() => new Promise(r => setTimeout(r, 300)));
+render(0);
+</script>
+</body>
+</html>
