@@ -1,0 +1,895 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Claude Intro</title>
+<link href="fonts/fonts.css" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050507;
+    --fg: #F2EEE8;
+    --dim: rgba(242,238,232,.6);
+    --faint: rgba(242,238,232,.14);
+    --hair: rgba(242,238,232,.24);
+    --acc: #FF7A45;
+    --acc2: #FFB48C;
+    --disp: "Space Grotesk", "Noto Sans SC", sans-serif;
+    --sans: "Noto Sans SC", sans-serif;
+    --mono: "JetBrains Mono", "Noto Sans SC", monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--bg); }
+  body { font-family: var(--sans); color: var(--fg); position: relative; -webkit-font-smoothing: antialiased; }
+  canvas#fx { position: absolute; inset: 0; }
+  #world { position: absolute; inset: 0; }
+  .scene { position: absolute; inset: 0; visibility: hidden; }
+  .abs { position: absolute; }
+  .o { opacity: 0; }
+  .ch { display: inline-block; white-space: pre; will-change: transform, opacity; }
+  .sc { position: relative; display: inline-block; white-space: pre; }
+  .sc > i { font-style: normal; visibility: hidden; }
+  .sc > b { position: absolute; left: 0; right: 0; top: 0; text-align: center; font-weight: inherit; }
+  .sc > b.x { color: var(--acc); }
+  .kick { font: 500 22px var(--mono); letter-spacing: 5px; color: var(--acc); white-space: nowrap; }
+  .caret { display: inline-block; width: 13px; height: 32px; background: var(--acc); vertical-align: -5px; margin-left: 6px; box-shadow: 0 0 12px var(--acc); }
+
+  /* HUD */
+  #hud { position: absolute; inset: 0; pointer-events: none; font: 500 18px var(--mono); letter-spacing: 3px; color: var(--dim); }
+  .corner { position: absolute; width: 36px; height: 36px; border: 0 solid var(--hair); }
+  .c1 { left: 48px; top: 48px; border-left-width: 2px; border-top-width: 2px; }
+  .c2 { right: 48px; top: 48px; border-right-width: 2px; border-top-width: 2px; }
+  .c3 { left: 48px; bottom: 48px; border-left-width: 2px; border-bottom-width: 2px; }
+  .c4 { right: 48px; bottom: 48px; border-right-width: 2px; border-bottom-width: 2px; }
+  #hud-tl { position: absolute; left: 100px; top: 58px; display: flex; gap: 14px; align-items: center; color: var(--fg); }
+  #hud-tl i { width: 10px; height: 10px; border-radius: 50%; background: var(--acc); box-shadow: 0 0 12px var(--acc); }
+  #hud-tr { position: absolute; right: 100px; top: 58px; }
+  #hud-bl { position: absolute; left: 100px; bottom: 58px; }
+  #hud-br { position: absolute; right: 100px; bottom: 58px; }
+  #track { position: absolute; left: 470px; right: 470px; bottom: 66px; height: 2px; background: var(--faint); }
+  #track i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--acc); box-shadow: 0 0 10px var(--acc); }
+  #track s { position: absolute; top: -5px; width: 2px; height: 12px; background: var(--hair); }
+
+  /* S1 */
+  #boot { left: 140px; top: 180px; font: 400 26px/1.9 var(--mono); color: var(--dim); white-space: pre; transform-origin: 50% 50%; }
+  #boot .ok { color: var(--acc); }
+  #t1 { left: 0; right: 0; top: 432px; text-align: center; font: 700 230px/1 var(--disp); letter-spacing: 40px; padding-left: 40px; text-shadow: 0 0 40px rgba(255,122,69,.5); }
+  #s1cn { left: 0; right: 0; top: 720px; text-align: center; font: 300 44px var(--sans); letter-spacing: 14px; }
+  #s1en { left: 0; right: 0; top: 800px; text-align: center; font: 500 22px var(--mono); letter-spacing: 8px; color: var(--acc); }
+
+  /* S2 */
+  #h2a, #h2b { left: 130px; font: 900 150px/1 var(--sans); letter-spacing: 6px; white-space: nowrap; }
+  #h2a { top: 250px; } #h2b { top: 430px; color: var(--acc); text-shadow: 0 0 40px rgba(255,122,69,.5); }
+  #s2k { left: 140px; top: 190px; }
+  #desc { left: 140px; top: 650px; font: 300 30px/1.8 var(--sans); color: var(--dim); }
+  #desc div { white-space: nowrap; }
+  #desc b { color: var(--fg); font-weight: 500; }
+  .tag3 { width: 230px; text-align: right; font: 500 16px var(--mono); letter-spacing: 3px; color: var(--acc); white-space: nowrap; }
+  .tag3 .cn { display: block; font: 700 34px var(--sans); color: var(--fg); letter-spacing: 3px; margin-top: 4px; }
+
+  /* S3 montage */
+  #mIdx { left: 140px; top: 300px; font: 500 24px var(--mono); letter-spacing: 6px; color: var(--acc); }
+  #mEn { left: 140px; top: 344px; font: 500 22px var(--mono); letter-spacing: 10px; color: var(--dim); }
+  #mCn { left: 128px; top: 390px; font: 900 210px/1.1 var(--sans); letter-spacing: 8px; white-space: nowrap; transform-origin: 0 50%; }
+  #mCap { left: 140px; top: 650px; font: 300 36px var(--sans); color: var(--dim); letter-spacing: 3px; white-space: nowrap; }
+  #mBar { left: 140px; top: 740px; width: 420px; height: 3px; background: var(--faint); }
+  #mBar i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--acc); box-shadow: 0 0 10px var(--acc); }
+  #sweep { left: 0; top: 0; width: 6px; height: 1080px; background: linear-gradient(180deg, transparent, var(--acc2), transparent); box-shadow: 0 0 40px 10px rgba(255,122,69,.5); opacity: 0; }
+  .lw { position: absolute; font: 700 44px var(--sans); color: var(--fg); white-space: nowrap; transform: translate(-50%, -50%); opacity: 0; }
+  .ret { position: absolute; border: 2px solid var(--acc); box-shadow: 0 0 16px rgba(255,122,69,.6); opacity: 0; }
+  .ret::before { content: attr(data-l); position: absolute; left: -2px; top: -28px; font: 500 16px var(--mono); letter-spacing: 3px; color: var(--acc); white-space: nowrap; }
+  #snip { font: 500 26px/1.6 var(--mono); white-space: pre; color: var(--fg); background: rgba(5,5,7,.6); border: 1px solid var(--hair); border-radius: 12px; padding: 18px 26px; opacity: 0; }
+  #snip .k { color: var(--acc); } #snip .f { color: var(--acc2); } #snip .c { color: var(--dim); }
+  #pages { font: 700 120px var(--disp); color: var(--fg); letter-spacing: 4px; text-shadow: 0 0 30px rgba(255,122,69,.5); opacity: 0; }
+  #pages small { display: block; font: 500 20px var(--mono); letter-spacing: 6px; color: var(--acc); text-align: right; }
+
+  /* S4 */
+  #flow { left: 0; right: 0; top: 150px; display: flex; justify-content: center; align-items: center; gap: 28px; font: 900 56px var(--sans); letter-spacing: 6px; }
+  #flow .w { color: rgba(242,238,232,.25); display: inline-block; }
+  #flow .w.on { color: var(--fg); text-shadow: 0 0 24px rgba(255,122,69,.7); }
+  #flow .ar { width: 90px; height: 2px; background: var(--faint); position: relative; }
+  #flow .ar i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--acc); box-shadow: 0 0 10px var(--acc); }
+  #stage4 { left: 0; top: 0; width: 1920px; height: 1080px; perspective: 1800px; }
+  #term { position: absolute; left: 260px; top: 300px; width: 1400px; height: 600px; background: rgba(16,14,16,.72); border: 1px solid var(--hair); border-radius: 20px; box-shadow: 0 40px 120px rgba(0,0,0,.6), 0 0 80px rgba(255,122,69,.12); display: grid; grid-template-columns: 1fr 440px; grid-template-rows: 64px 1fr; overflow: hidden; }
+  #term .bar { grid-column: 1 / -1; border-bottom: 1px solid var(--hair); display: flex; align-items: center; padding: 0 30px; gap: 12px; font: 500 18px var(--mono); letter-spacing: 3px; color: var(--dim); }
+  #term .bar .lt { display: flex; gap: 10px; margin-right: 16px; } #term .bar .lt b { width: 13px; height: 13px; border-radius: 50%; background: var(--hair); }
+  #term .bar .live { margin-left: auto; color: var(--acc); display: flex; gap: 10px; align-items: center; }
+  #term .bar .live i { width: 10px; height: 10px; border-radius: 50%; background: var(--acc); box-shadow: 0 0 12px var(--acc); }
+  #chat { padding: 44px 50px; display: flex; flex-direction: column; gap: 36px; }
+  .line { display: grid; grid-template-columns: 150px 1fr; font: 400 34px/1.7 var(--sans); }
+  .line .who { font: 700 20px/58px var(--mono); letter-spacing: 3px; color: var(--dim); }
+  .line.ai .who { color: var(--acc); }
+  .tok { display: inline-block; white-space: pre; }
+  .think { display: inline-flex; gap: 8px; align-items: center; font: 500 20px var(--mono); letter-spacing: 3px; color: var(--dim); }
+  .think i { width: 6px; height: 26px; background: var(--acc); }
+  #trace { border-left: 1px solid var(--hair); padding: 40px 36px; position: relative; }
+  #trace .h { font: 500 18px var(--mono); letter-spacing: 4px; color: var(--dim); margin-bottom: 30px; }
+  #trace .spine { position: absolute; left: 43px; top: 138px; width: 2px; height: 0; background: var(--acc); box-shadow: 0 0 10px var(--acc); }
+  .step { position: relative; display: flex; align-items: center; gap: 22px; font: 400 26px var(--sans); height: 76px; opacity: 0; }
+  .step .nd { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--acc); background: var(--bg); flex: none; }
+  .step.on .nd { background: var(--acc); box-shadow: 0 0 16px var(--acc); }
+  #note4 { right: 140px; top: 950px; font: 400 18px var(--sans); color: rgba(242,238,232,.35); }
+
+  /* S5 */
+  #s5k { left: 140px; top: 170px; }
+  #mTier { left: 140px; top: 370px; font: 500 22px var(--mono); letter-spacing: 6px; color: var(--acc); }
+  #mName { left: 126px; top: 410px; font: 700 190px/1 var(--disp); letter-spacing: 12px; text-shadow: 0 0 40px rgba(255,122,69,.35); white-space: nowrap; }
+  #mDesc { left: 140px; top: 640px; font: 300 40px var(--sans); color: var(--dim); letter-spacing: 4px; white-space: nowrap; }
+  .rl { font: 700 22px var(--mono); letter-spacing: 4px; color: var(--fg); white-space: nowrap; opacity: 0; }
+  .rl span { color: var(--acc); }
+
+  /* S6 */
+  #s6k { left: 140px; top: 190px; }
+  #h6 { left: 130px; top: 240px; font: 900 140px/1 var(--sans); letter-spacing: 6px; white-space: nowrap; }
+  #h6s { left: 140px; top: 420px; font: 300 36px var(--sans); color: var(--dim); letter-spacing: 4px; white-space: nowrap; }
+  .chip { position: absolute; width: 400px; padding: 14px 22px; background: rgba(16,14,16,.72); border: 1px solid var(--hair); border-radius: 14px; white-space: nowrap; box-shadow: 0 0 40px rgba(255,122,69,.12); opacity: 0; }
+  .chip .k { font: 500 16px var(--mono); letter-spacing: 3px; color: var(--acc); }
+  .chip .t { font: 700 34px var(--disp); margin-top: 2px; }
+  .chip .d { font: 300 22px var(--sans); color: var(--dim); margin-top: 2px; }
+  .chip .code { margin-top: 10px; font: 500 20px var(--mono); }
+  .chip .code .p { color: var(--acc); }
+  .chip .caret { height: 22px; width: 11px; vertical-align: -4px; }
+
+  /* S7 */
+  .fw { left: 0; right: 0; top: 340px; text-align: center; font: 700 250px/1 var(--disp); letter-spacing: 16px; color: transparent; -webkit-text-stroke: 2px rgba(242,238,232,.75); white-space: nowrap; transform-origin: 50% 50%; opacity: 0; }
+  .fc { left: 0; right: 0; top: 400px; text-align: center; font: 900 110px var(--sans); color: var(--acc); letter-spacing: 16px; text-shadow: 0 0 40px rgba(255,122,69,.6); opacity: 0; }
+  .fd { left: 0; right: 0; top: 560px; text-align: center; font: 300 34px var(--sans); color: var(--fg); letter-spacing: 8px; opacity: 0; }
+  #s7k { left: 140px; top: 170px; }
+  #cai { left: 0; right: 0; top: 870px; text-align: center; font: 500 20px var(--mono); letter-spacing: 5px; color: var(--dim); }
+  #cai b { color: var(--fg); font: 500 28px var(--sans); letter-spacing: 3px; }
+
+  /* S8 */
+  #asm { left: 0; right: 0; top: 700px; text-align: center; font: 500 22px var(--mono); letter-spacing: 8px; color: var(--dim); }
+  #asm b { color: var(--acc); font-weight: 500; }
+  #spark { left: 760px; top: 130px; width: 400px; height: 400px; overflow: visible; filter: drop-shadow(0 0 22px rgba(255,122,69,.9)); opacity: 0; }
+  #t8 { left: 0; right: 0; top: 560px; text-align: center; font: 700 150px/1 var(--disp); letter-spacing: 34px; padding-left: 34px; }
+  #s8sub { left: 0; right: 0; top: 760px; text-align: center; font: 300 42px var(--sans); letter-spacing: 8px; }
+  #url { left: 0; right: 0; top: 860px; text-align: center; }
+  #url span { display: inline-block; font: 500 26px var(--mono); letter-spacing: 6px; color: var(--acc); border: 1px solid var(--acc); padding: 12px 34px; border-radius: 999px; box-shadow: 0 0 24px rgba(255,122,69,.35), inset 0 0 18px rgba(255,122,69,.15); }
+
+  /* post */
+  #glitch { position: absolute; inset: 0; pointer-events: none; }
+  #glitch i { position: absolute; display: block; }
+  #flash { position: absolute; inset: 0; background: #fff; opacity: 0; mix-blend-mode: overlay; }
+  #grain { position: absolute; left: -128px; top: -128px; width: 2176px; height: 1336px; opacity: .05; mix-blend-mode: screen; }
+  #scan { position: absolute; inset: 0; background: repeating-linear-gradient(0deg, rgba(0,0,0,.18) 0 1px, transparent 1px 3px); opacity: .3; }
+  #vig { position: absolute; inset: 0; background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.7) 100%); }
+  #black { position: absolute; inset: 0; background: #000; opacity: 0; }
+  #preload { position: absolute; opacity: 0; white-space: nowrap; }
+</style>
+</head>
+<body>
+<canvas id="fx" width="1920" height="1080"></canvas>
+
+<div id="world">
+  <!-- S1 BOOT -->
+  <section class="scene" id="s1">
+    <div id="boot" class="abs"></div>
+    <div id="t1" class="abs o"></div>
+    <div id="s1cn" class="abs o">由 Anthropic 打造的 AI 助手</div>
+    <div id="s1en" class="abs o"></div>
+  </section>
+
+  <!-- S2 NEURAL CORE -->
+  <section class="scene" id="s2">
+    <div id="s2k" class="abs kick o"></div>
+    <div id="h2a" class="abs o">会思考的</div>
+    <div id="h2b" class="abs o">AI 伙伴</div>
+    <div id="desc" class="abs">
+      <div class="o"><b>Claude</b> 是 <b>Anthropic</b> 开发的大语言模型 AI 助手</div>
+      <div class="o">Anthropic 专注于 AI 安全与研究</div>
+      <div class="o">致力于构建可靠、可解释、可引导的 AI 系统</div>
+    </div>
+    <div class="abs tag3 o" id="lb0">RELIABLE<span class="cn">可靠</span></div>
+    <div class="abs tag3 o" id="lb1">INTERPRETABLE<span class="cn">可解释</span></div>
+    <div class="abs tag3 o" id="lb2">STEERABLE<span class="cn">可引导</span></div>
+  </section>
+
+  <!-- S3 CAPABILITY MONTAGE -->
+  <section class="scene" id="s3">
+    <div id="mIdx" class="abs o"></div>
+    <div id="mEn" class="abs o"></div>
+    <div id="mCn" class="abs o"></div>
+    <div id="mCap" class="abs o"></div>
+    <div id="mBar" class="abs o"><i></i></div>
+    <div id="snip" class="abs"></div>
+    <div id="langs"></div>
+    <div id="rets"><div class="ret" data-l="图表 · CHART"></div><div class="ret" data-l="文字 · TEXT"></div><div class="ret" data-l="表格 · TABLE"></div></div>
+    <div id="pages" class="abs"></div>
+    <div id="sweep" class="abs"></div>
+  </section>
+
+  <!-- S4 INTERFACE -->
+  <section class="scene" id="s4">
+    <div id="flow" class="abs o"><span class="w">提问</span><span class="ar"><i></i></span><span class="w">思考</span><span class="ar"><i></i></span><span class="w">回答</span></div>
+    <div id="stage4" class="abs">
+      <div id="term">
+        <div class="bar"><div class="lt"><b></b><b></b><b></b></div>claude — session<div class="live"><i></i>LIVE</div></div>
+        <div id="chat">
+          <div class="line"><div class="who">USER ›</div><div id="q4"></div></div>
+          <div class="line ai"><div class="who">CLAUDE ›</div><div id="a4"></div></div>
+        </div>
+        <div id="trace">
+          <div class="h">THINKING TRACE</div>
+          <div class="spine"></div>
+          <div class="step"><span class="nd"></span>理解问题</div>
+          <div class="step"><span class="nd"></span>提炼概念：自我调用</div>
+          <div class="step"><span class="nd"></span>构建类比：镜中镜</div>
+          <div class="step"><span class="nd"></span>校验：终止条件</div>
+          <div class="step"><span class="nd"></span>组织回答</div>
+        </div>
+      </div>
+    </div>
+    <div id="note4" class="abs o">* 界面为示意</div>
+  </section>
+
+  <!-- S5 MODEL FAMILY -->
+  <section class="scene" id="s5">
+    <div id="s5k" class="abs kick o"></div>
+    <div id="mTier" class="abs o"></div>
+    <div id="mName" class="abs o"></div>
+    <div id="mDesc" class="abs o"></div>
+    <div class="abs rl" id="rl0"><span>◆</span> HAIKU</div>
+    <div class="abs rl" id="rl1"><span>◆</span> SONNET</div>
+    <div class="abs rl" id="rl2"><span>◆</span> OPUS</div>
+  </section>
+
+  <!-- S6 EVERYWHERE -->
+  <section class="scene" id="s6">
+    <div id="s6k" class="abs kick o"></div>
+    <div id="h6" class="abs o">随时随地</div>
+    <div id="h6s" class="abs o">连接你工作的每一处</div>
+    <div class="chip" id="cp0"><div class="k">01 · APPS</div><div class="t">Claude 应用</div><div class="d">网页 · 桌面端 · 移动端</div></div>
+    <div class="chip" id="cp1"><div class="k">02 · CLAUDE CODE</div><div class="t">Claude Code</div><div class="code"><span class="p">$</span> <span id="cmd6"></span><span class="caret" id="caret6"></span></div></div>
+    <div class="chip" id="cp2"><div class="k">03 · API</div><div class="t">Claude API</div><div class="code"><span class="p">POST</span> /v1/messages</div></div>
+  </section>
+
+  <!-- S7 PRINCIPLES -->
+  <section class="scene" id="s7">
+    <div id="s7k" class="abs kick o"></div>
+    <div class="abs fw" id="fw0">HELPFUL</div><div class="abs fc" id="fc0">有帮助</div><div class="abs fd" id="fd0">真正解决你的问题</div>
+    <div class="abs fw" id="fw1">HONEST</div><div class="abs fc" id="fc1">诚实</div><div class="abs fd" id="fd1">坦诚面对不确定</div>
+    <div class="abs fw" id="fw2">HARMLESS</div><div class="abs fc" id="fc2">无害</div><div class="abs fd" id="fd2">安全是底线</div>
+    <div id="cai" class="abs o">以 <b>「宪法式 AI」</b> 等方法训练 · CONSTITUTIONAL AI</div>
+  </section>
+
+  <!-- S8 HELLO -->
+  <section class="scene" id="s8">
+    <div id="asm" class="abs o"></div>
+    <svg id="spark" class="abs" viewBox="-200 -200 400 400"></svg>
+    <div id="t8" class="abs o"></div>
+    <div id="s8sub" class="abs o"></div>
+    <div id="url" class="abs o"><span>claude.ai</span></div>
+  </section>
+</div>
+
+<div id="hud">
+  <div class="corner c1"></div><div class="corner c2"></div><div class="corner c3"></div><div class="corner c4"></div>
+  <div id="hud-tl"><i></i>CLAUDE // SYSTEM INTRO</div>
+  <div id="hud-tr"></div>
+  <div id="hud-bl"></div>
+  <div id="hud-br">BUILT BY ANTHROPIC</div>
+  <div id="track"><i></i></div>
+</div>
+<div id="glitch"></div>
+<div id="flash"></div>
+<canvas id="grain" width="512" height="512"></canvas>
+<div id="scan"></div>
+<div id="vig"></div>
+<div id="black"></div>
+<div id="preload"></div>
+
+<script>
+/* ============================ content & timing ============================ */
+const DURATION = 64, FPS = 30, W = 1920, H = 1080, FOCAL = 1400;
+const CUTS = [8, 16, 26, 35, 43, 50, 56];
+const BEATS = [16.05, 17.65, 19.25, 20.85, 22.45, 24.05, 25.9];
+const MODEL_PH = [35.6, 37.7, 39.8, 41.9];
+const FLY = [50.25, 51.95, 53.65];
+const COLLAPSE = 59.1;
+const SCENES = [
+  { id: "s1", a: 0,  b: 8,  code: "SEQ 00 · BOOT" },
+  { id: "s2", a: 8,  b: 16, code: "SEQ 01 · NEURAL CORE" },
+  { id: "s3", a: 16, b: 26, code: "SEQ 02 · CAPABILITIES" },
+  { id: "s4", a: 26, b: 35, code: "SEQ 03 · INTERFACE" },
+  { id: "s5", a: 35, b: 43, code: "SEQ 04 · MODEL FAMILY" },
+  { id: "s6", a: 43, b: 50, code: "SEQ 05 · EVERYWHERE" },
+  { id: "s7", a: 50, b: 56, code: "SEQ 06 · PRINCIPLES" },
+  { id: "s8", a: 56, b: 65, code: "SEQ 07 · HELLO" },
+];
+const BOOT = [
+  ["> boot sequence initiated", ""],
+  ["> loading neural weights ........ ", "OK"],
+  ["> calibrating reasoning engine .. ", "OK"],
+  ["> alignment check ............... ", "PASS"],
+  ["> hello, world_", ""],
+];
+const CAPS = [
+  { en: "WRITING", cn: "写作", cap: "从一个想法，到一整篇文章" },
+  { en: "CODING", cn: "编程", cap: "写代码 · 审代码 · 修 Bug" },
+  { en: "REASONING", cn: "推理", cap: "拆解复杂问题，一步步推演" },
+  { en: "MULTILINGUAL", cn: "多语言", cap: "跨越语言，自然交流" },
+  { en: "VISION", cn: "视觉", cap: "看懂图片、图表与文档" },
+  { en: "LONG CONTEXT", cn: "长上下文", cap: "一次读完整本书" },
+];
+const MODELS = [
+  { n: "HAIKU", tier: "TIER · 01", d: "迅捷 · 轻量 · 高性价比" },
+  { n: "SONNET", tier: "TIER · 02", d: "能力与速度的均衡之选" },
+  { n: "OPUS", tier: "TIER · 03", d: "深度推理 · 最强智能" },
+];
+const LANGS = ["你好", "Hello", "こんにちは", "Bonjour", "Hola", "Ciao", "Hallo", "Olá"];
+const Q = "用一句话解释什么是递归？";
+const A = "递归，就是函数在解题时调用它自己——像两面相对的镜子层层映照，直到遇到终止条件才停下。";
+const SNIP = [["k", "def "], ["f", "think"], ["", "(q):\n    "], ["k", "return "], ["f", "reason"], ["", "(q)  "], ["c", "# ✓"]];
+const CMD = "claude";
+const OUTRO = "你好，我是 Claude。有什么可以帮你的？";
+const GLYPHS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#$%&*+=<>/\\[]{}";
+
+/* ================================= utils ================================= */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const clamp = x => Math.max(0, Math.min(1, x));
+const prog = (t, a, d) => clamp((t - a) / d);
+const out3 = x => 1 - Math.pow(1 - x, 3);
+const out5 = x => 1 - Math.pow(1 - x, 5);
+const in3 = x => x * x * x;
+const inout = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const lerp = (a, b, k) => a + (b - a) * k;
+function hash(a, b = 0) { let h = Math.imul((a | 0) ^ 0x9e3779b9, 374761393) + Math.imul(b | 0, 668265263); h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
+function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const caretOn = t => Math.floor(t * 2.2) % 2 === 0;
+function typed(str, t, a, cps) { const c = Array.from(str); return c.slice(0, Math.max(0, Math.min(c.length, Math.floor((t - a) * cps)))).join(""); }
+
+function setT(el, { o = 1, x = 0, y = 0, s = 1, sx = null, sy = null, blur = 0, clip = null } = {}) {
+  el.style.opacity = o;
+  el.style.transform = `translate(${x}px, ${y}px) scale(${sx ?? s}, ${sy ?? s})`;
+  el.style.filter = blur > .05 ? `blur(${blur}px)` : "";
+  el.style.clipPath = clip || "";
+}
+/* enter / exit envelope for an element visible on [a, b] */
+function life(el, t, a, b, { enter = "rise", exit = "slice", d = .6, xd = .28, dist = 40 } = {}) {
+  if (t < a || t > b) { el.style.opacity = 0; return false; }
+  const ki = out3(prog(t, a, d)), ko = prog(t, b - xd, xd);
+  const st = {};
+  if (enter === "rise") Object.assign(st, { o: ki, y: dist * (1 - ki), blur: 10 * (1 - ki) });
+  if (enter === "left") Object.assign(st, { o: ki, x: -dist * (1 - ki), blur: 8 * (1 - ki) });
+  if (enter === "zoom") Object.assign(st, { o: ki, s: lerp(1.35, 1, ki), blur: 18 * (1 - ki) });
+  if (enter === "wipe") Object.assign(st, { o: 1, clip: `inset(0 ${100 * (1 - ki)}% 0 0)` });
+  if (ko > 0) {
+    if (exit === "slice") {
+      const f = Math.floor(t * FPS);
+      st.x = (st.x || 0) + (hash(f, 7) - .5) * 80 * ko;
+      st.clip = `inset(${100 * in3(ko) * hash(f, 3)}% 0 ${100 * in3(ko) * hash(f, 5)}% 0)`;
+      st.o = (st.o ?? 1) * (1 - ko);
+    } else if (exit === "fade") st.o = (st.o ?? 1) * (1 - ko);
+  }
+  setT(el, st);
+  return true;
+}
+function splitChars(el) {
+  const s = el.textContent; el.textContent = "";
+  el._c = Array.from(s).map(c => { const sp = document.createElement("span"); sp.className = "ch"; sp.textContent = c; el.appendChild(sp); return sp; });
+}
+function flipIn(el, t, a, st = .07) {
+  el._c.forEach((c, i) => {
+    const k = out3(prog(t, a + i * st, .55));
+    c.style.opacity = k;
+    c.style.transform = `perspective(700px) translateY(${(1 - k) * 60}px) rotateX(${(1 - k) * -95}deg)`;
+    c.style.filter = k < 1 ? `blur(${(1 - k) * 8}px)` : "";
+  });
+}
+function charsIn(el, t, a, st = .045) {
+  el._c.forEach((c, i) => { const k = out3(prog(t, a + i * st, .5)); c.style.opacity = k; c.style.transform = `translateY(${(1 - k) * 30}px)`; c.style.filter = k < 1 ? `blur(${(1 - k) * 10}px)` : ""; });
+}
+function buildScramble(el, str) {
+  el.textContent = ""; el._str = str;
+  el._s = Array.from(str).map(ch => { const sp = document.createElement("span"); sp.className = "sc"; sp.innerHTML = `<i>${ch === " " ? "&nbsp;" : ch}</i><b></b>`; el.appendChild(sp); return { b: sp.lastChild, ch }; });
+}
+function scramble(el, t, a, st = .06, d = .45) {
+  el._s.forEach((o, i) => {
+    const s0 = a + i * st, s1 = s0 + d;
+    if (t < s0) { o.b.textContent = ""; }
+    else if (t < s1 && o.ch !== " ") { o.b.textContent = GLYPHS[Math.floor(hash(Math.floor(t * 24), i * 7 + 3) * GLYPHS.length)]; o.b.className = "x"; }
+    else { o.b.textContent = o.ch; o.b.className = ""; }
+  });
+}
+function setScramble(el, str) { if (el._str !== str) buildScramble(el, str); }
+
+/* ============================ camera & particles ============================ */
+const cv = $("#fx"), g = cv.getContext("2d");
+function sprite(r, col) {
+  const c = document.createElement("canvas"); c.width = c.height = r * 2; const x = c.getContext("2d");
+  const gr = x.createRadialGradient(r, r, 0, r, r, r);
+  gr.addColorStop(0, col(1)); gr.addColorStop(.22, col(.55)); gr.addColorStop(1, col(0));
+  x.fillStyle = gr; x.fillRect(0, 0, r * 2, r * 2); return c;
+}
+const DOT = sprite(32, a => `rgba(255,140,90,${a})`);
+const WDOT = sprite(32, a => `rgba(255,236,224,${a})`);
+
+let CAM = { yaw: 0, pitch: 0, zoom: 1, ox: 0, oy: 0 };
+function proj(x, y, z) {
+  let c = Math.cos(CAM.yaw), s = Math.sin(CAM.yaw);
+  const x1 = x * c + z * s, z1 = -x * s + z * c;
+  c = Math.cos(CAM.pitch); s = Math.sin(CAM.pitch);
+  const y1 = y * c - z1 * s, z2 = y * s + z1 * c;
+  const den = FOCAL + z2;
+  if (den < 60) return null;
+  const f = FOCAL / den * CAM.zoom;
+  return [W / 2 + CAM.ox + x1 * f, H / 2 + CAM.oy + y1 * f, z2, f];
+}
+function kf(list, t) {
+  if (t <= list[0][0]) return { ...list[0][1] };
+  for (let i = 0; i < list.length - 1; i++) {
+    const [t0, v0] = list[i], [t1, v1] = list[i + 1];
+    if (t <= t1) { const k = inout((t - t0) / (t1 - t0)); const o = {}; for (const key in v0) o[key] = lerp(v0[key], v1[key] ?? v0[key], k); return o; }
+  }
+  return { ...list[list.length - 1][1] };
+}
+const C0 = { yaw: 0, pitch: 0, zoom: 1, ox: 0, oy: 0 };
+const CAMK = [
+  [0,     { ...C0 }],
+  [3.75,  { ...C0, yaw: .7, pitch: -.15, zoom: .9 }],
+  [5.4,   { ...C0 }],
+  [7.2,   { ...C0, zoom: 1.02 }],
+  [8.2,   { ...C0, zoom: 1.35, pitch: .1 }],
+  [9.8,   { ...C0, zoom: 1.05, ox: 440, oy: 30 }],
+  [15.8,  { ...C0, zoom: 1.12, ox: 440, oy: 30, pitch: -.12 }],
+  [16.3,  { ...C0, ox: 360, yaw: -.25 }],
+  [17.6,  { ...C0, ox: 360, yaw: .15 }],
+  [19.2,  { ...C0, ox: 360, yaw: .05, zoom: .95 }],
+  [19.4,  { ...C0, ox: 360, yaw: .55 }],
+  [20.8,  { ...C0, ox: 360, yaw: -.35 }],
+  [21.0,  { ...C0, ox: 440, pitch: -.5 }],
+  [22.4,  { ...C0, ox: 440, pitch: -.35, zoom: 1.05 }],
+  [22.6,  { ...C0, ox: 360, pitch: .35, yaw: -.35 }],
+  [24.0,  { ...C0, ox: 360, pitch: .15, yaw: .25 }],
+  [24.2,  { ...C0, ox: 360 }],
+  [25.8,  { ...C0, ox: 360, zoom: 1.1 }],
+  [26.8,  { ...C0 }],
+  [34.8,  { ...C0, zoom: 1.08 }],
+  [35.6,  { ...C0, ox: 420, pitch: -.62, yaw: -.3, zoom: 1.05 }],
+  [42.8,  { ...C0, ox: 420, pitch: -.42, yaw: .55, zoom: 1.0 }],
+  [43.6,  { ...C0, ox: 430, oy: 60, pitch: -.3 }],
+  [49.8,  { ...C0, ox: 430, oy: 60, pitch: -.18, zoom: 1.08 }],
+  [50.6,  { ...C0, pitch: -.1, oy: -60 }],
+  [55.8,  { ...C0, pitch: -.14, oy: -60 }],
+  [56.8,  { ...C0, oy: -210, zoom: 1.1 }],
+  [59.0,  { ...C0, oy: -210 }],
+  [64,    { ...C0, oy: -210 }],
+];
+const SHAKES = [[3.4, 1.2], ...CUTS.map(c => [c, .55]), ...BEATS.slice(1, 6).map(b => [b, .3]), [COLLAPSE, 1.6]];
+function shake(t) {
+  let x = 0, y = 0;
+  for (const [t0, a] of SHAKES) if (t >= t0 && t < t0 + .8) { const e = a * Math.exp(-(t - t0) * 8); x += Math.sin(t * 93 + t0) * e * 22; y += Math.cos(t * 71 + t0 * 3) * e * 16; }
+  return [x, y];
+}
+
+/* ---- particle data ---- */
+const NP = 2400, rnd = mulberry(11);
+const R = Array.from({ length: NP }, () => [rnd(), rnd(), rnd(), rnd(), rnd(), rnd()]);
+const DIR = R.map(r => { const u = r[0] * Math.PI * 2, v = Math.acos(2 * r[1] - 1); return [Math.sin(v) * Math.cos(u), Math.cos(v), Math.sin(v) * Math.sin(u)]; });
+const NS = 900, FIB = [];
+for (let i = 0; i < NS; i++) { const y = 1 - (i / (NS - 1)) * 2, r = Math.sqrt(1 - y * y), th = i * Math.PI * (3 - Math.sqrt(5)); FIB.push([Math.cos(th) * r, y, Math.sin(th) * r]); }
+const PAIRS = [];
+for (let i = 0; i < NS; i++) {
+  const d = [];
+  for (let j = 0; j < NS; j++) if (j !== i) d.push([(FIB[i][0] - FIB[j][0]) ** 2 + (FIB[i][1] - FIB[j][1]) ** 2 + (FIB[i][2] - FIB[j][2]) ** 2, j]);
+  d.sort((a, b) => a[0] - b[0]);
+  for (let k = 0; k < 3; k++) if (d[k][1] > i) PAIRS.push([i, d[k][1]]);
+}
+let TEXTPTS = [[0, 0]];
+function sampleText() {
+  const c = document.createElement("canvas"); c.width = 1800; c.height = 400; const x = c.getContext("2d");
+  x.fillStyle = "#fff"; x.font = "700 230px 'Space Grotesk'"; x.letterSpacing = "40px"; x.textAlign = "center"; x.textBaseline = "middle";
+  x.fillText("CLAUDE", 920, 200);
+  const d = x.getImageData(0, 0, 1800, 400).data, pts = [];
+  for (let yy = 0; yy < 400; yy += 4) for (let xx = 0; xx < 1800; xx += 4) if (d[(yy * 1800 + xx) * 4 + 3] > 128) pts.push([xx, yy]);
+  let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; pts.forEach(p => { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); });
+  const r2 = mulberry(5);
+  TEXTPTS = pts.map(p => [p[0] - (x0 + x1) / 2, p[1] - (y0 + y1) / 2, r2()]).sort((a, b) => a[2] - b[2]);
+}
+/* neural layers */
+const LAYERS = [4, 6, 7, 6, 3], NODES = [], EDGES = [];
+LAYERS.forEach((n, L) => { for (let k = 0; k < n; k++) NODES.push({ L, x: (L - 2) * 250, y: (k - (n - 1) / 2) * 105 }); });
+NODES.forEach((a, i) => NODES.forEach((b, j) => { if (b.L === a.L + 1) EDGES.push([i, j]); }));
+/* globe cities (unit vectors) and arcs between them */
+const CITIES = [[.6, .3], [-.5, 1.2], [.2, 2.4], [-.2, 3.4], [.75, 4.4], [-.65, 5.3], [.35, 5.9], [0, .9]].map(([lat, lon]) => [Math.cos(lat) * Math.cos(lon), -Math.sin(lat), Math.cos(lat) * Math.sin(lon)]);
+const ARCS = [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 0], [7, 3], [0, 4], [2, 6], [1, 5], [7, 5]];
+const CHIP_CITY = [7, 0, 1];
+
+function rotY(p, a) { const c = Math.cos(a), s = Math.sin(a); return [p[0] * c + p[2] * s, p[1], -p[0] * s + p[2] * c]; }
+function rotX(p, a) { const c = Math.cos(a), s = Math.sin(a); return [p[0], p[1] * c - p[2] * s, p[1] * s + p[2] * c]; }
+function slerp(a, b, u) {
+  const d = Math.max(-1, Math.min(1, a[0] * b[0] + a[1] * b[1] + a[2] * b[2])), om = Math.acos(d), so = Math.sin(om) || 1;
+  const ka = Math.sin((1 - u) * om) / so, kb = Math.sin(u * om) / so;
+  return [a[0] * ka + b[0] * kb, a[1] * ka + b[1] * kb, a[2] * ka + b[2] * kb];
+}
+const sphereRot = t => t * .35 + (t > 56 ? Math.pow(t - 56, 2) * .22 : 0);
+const GLOBE_R = 310, globeRot = t => t * .28;
+function sphereR(t) { return t > 58.45 ? 300 * Math.pow(1 - prog(t, 58.45, .65), 2) + 2 : 300; }
+const modelActive = t => t < MODEL_PH[0] ? -1 : t < MODEL_PH[1] ? 0 : t < MODEL_PH[2] ? 1 : t < MODEL_PH[3] ? 2 : 3;
+const RINGS = [{ r: 230, sp: 1.3, tx: .22, tz: .1 }, { r: 370, sp: .7, tx: .05, tz: -.08 }, { r: 510, sp: .38, tx: -.12, tz: .05 }];
+function ringPoint(k, a) {
+  const ring = RINGS[k]; let p = rotX([Math.cos(a) * ring.r, 0, Math.sin(a) * ring.r], ring.tx);
+  const c = Math.cos(ring.tz), s = Math.sin(ring.tz); return [p[0] * c - p[1] * s, p[0] * s + p[1] * c, p[2]];
+}
+
+/* formation functions: return [x, y, z, brightness] */
+const F = {
+  dust(i, t) { const r = R[i]; return [(r[0] * 2 - 1) * 1700, (r[1] * 2 - 1) * 950, (r[2] * 2 - 1) * 1400 + Math.sin(t * .3 + r[3] * 6) * 40, .28]; },
+  burst(i, t) { const d = DIR[i], m = 500 + R[i][3] * 1500; return [d[0] * m, d[1] * m * .7, d[2] * m, 1.1]; },
+  text(i, t) { const p = TEXTPTS[i % TEXTPTS.length], r = R[i]; return [p[0] + (r[4] - .5) * 3, p[1] + (r[5] - .5) * 3, Math.sin(t * 2 + p[0] * .01) * 8, .95 + .4 * (r[3] > .9)]; },
+  sphere(i, t) {
+    const rad = sphereR(t), a = sphereRot(t);
+    let p, b;
+    if (i < NS) { p = FIB[i]; b = 1; } else { const d = DIR[i], m = .25 + .6 * R[i][3]; p = [d[0] * m, d[1] * m, d[2] * m]; b = .32; }
+    const br = 1 + Math.sin(t * 1.5 + R[i][2] * 6) * .015;
+    const q = rotX(rotY(p, a), -.3);
+    return [q[0] * rad * br, q[1] * rad * br, q[2] * rad * br, b];
+  },
+  lines(i, t) {
+    const L = i % 9, len = [900, 860, 900, 620, 900, 800, 900, 480, 700][L];
+    const rev = out3(prog(t, 16.3 + L * .1, .9)), u = R[i][0];
+    return [-450 + len * u * rev, -240 + L * 60 + (R[i][1] - .5) * 5, (R[i][2] - .5) * 20, u > .97 ? 1.6 : .85];
+  },
+  rain(i, t) {
+    const c = i % 28, sp = .35 + hash(c, 9) * .5, u = ((R[i][0] + t * sp) % 1);
+    return [-560 + c * 41, u * 1300 - 650, (hash(c, 4) - .5) * 300, .25 + 1.2 * Math.pow(u, 6) + (R[i][1] > .97 ? .8 : 0)];
+  },
+  layers(i, t) {
+    if (i % 3 === 0) { const n = NODES[Math.floor(R[i][0] * NODES.length)], a = R[i][1] * 6.28, rr = 12 * Math.sqrt(R[i][2]); return [n.x + Math.cos(a) * rr, n.y + Math.sin(a) * rr, (R[i][3] - .5) * 10, 1.25]; }
+    const e = EDGES[Math.floor(R[i][0] * EDGES.length)], a = NODES[e[0]], b = NODES[e[1]], u = (R[i][1] + t * (.35 + R[i][2] * .4)) % 1;
+    return [lerp(a.x, b.x, u), lerp(a.y, b.y, u), 0, .55 + (R[i][3] > .85 ? .8 : 0)];
+  },
+  langring(i, t) { const a = R[i][0] * 6.28 + t * .4, rr = 390 + (R[i][1] - .5) * 50; return [Math.cos(a) * rr, (R[i][2] - .5) * 36, Math.sin(a) * rr, .75]; },
+  pixels(i, t) {
+    const k = i % 960, cx = k % 40, cy = Math.floor(k / 40);
+    const bar = Math.floor(cx / 5), barH = [.4, .7, .5, .9, .6, .8, .45, .75][bar];
+    const lit = (23 - cy) / 23 < barH && cx % 5 !== 4 ? 1.3 : .35;
+    return [(cx - 19.5) * 24 + (R[i][3] - .5) * 3, (cy - 11.5) * 24, Math.sin(cx * .3 + t * 2) * Math.cos(cy * .3 + t * 1.4) * 26, lit];
+  },
+  tunnel(i, t) { const a = R[i][0] * 6.28, rr = 380 + R[i][1] * 140, z = ((R[i][2] - t * .9) % 1 + 1) % 1 * 3400 - 1100; return [Math.cos(a) * rr, Math.sin(a) * rr, z, .9]; },
+  halo(i, t) { const a = R[i][0] * 6.28 + t * .08, rr = 640 + (R[i][1] - .5) * 90; return [Math.cos(a) * rr, Math.sin(a) * rr * .42 + 40, Math.sin(a) * 200 + (R[i][2] - .5) * 40, .45]; },
+  rings(i, t) {
+    if (i % 12 === 0) { const d = DIR[i], m = 70 * (.5 + .5 * R[i][3]); return [d[0] * m, d[1] * m, d[2] * m, 1.2]; }
+    const k = i % 3, p = ringPoint(k, R[i][0] * 6.28 + t * RINGS[k].sp), j = (R[i][1] - .5) * 22;
+    const act = modelActive(t), b = act === 3 ? 1 : act === k ? 1.6 : .35;
+    return [p[0] * (1 + j / RINGS[k].r), p[1] + (R[i][2] - .5) * 10, p[2] * (1 + j / RINGS[k].r), b];
+  },
+  globe(i, t) {
+    let p;
+    if (i % 6 === 1) { const lon = Math.floor(R[i][0] * 10) / 10 * Math.PI, lat = (R[i][1] - .5) * Math.PI; p = [Math.cos(lat) * Math.cos(lon), -Math.sin(lat), Math.cos(lat) * Math.sin(lon)]; }
+    else if (i % 6 !== 0) { const lat = (Math.floor(R[i][0] * 9) - 4) * .33, lon = R[i][1] * 6.28; p = [Math.cos(lat) * Math.cos(lon), -Math.sin(lat), Math.cos(lat) * Math.sin(lon)]; }
+    else { const ar = ARCS[Math.floor(R[i][0] * ARCS.length)], u = (R[i][1] + t * .45) % 1, q = slerp(CITIES[ar[0]], CITIES[ar[1]], u), lift = 1 + Math.sin(Math.PI * u) * .14; p = [q[0] * lift, q[1] * lift, q[2] * lift]; }
+    const q = rotY(p, globeRot(t));
+    return [q[0] * GLOBE_R, q[1] * GLOBE_R, q[2] * GLOBE_R, i % 6 === 0 ? 1.15 : .5];
+  },
+  terrain(i, t) {
+    const gx = i % 60, gz = Math.floor(i / 60) % 40;
+    const x = (gx - 29.5) * 60, z = ((gz / 40 - t * .14) % 1 + 1) % 1 * 2600 - 700;
+    const y = 300 + Math.sin(x * .004 + t * 1.2) * Math.cos(z * .0035 - t) * 90;
+    return [x, y, z, .75 * clamp(1 - (z + 700) / 2600) + .15];
+  },
+  spark(i, t) {
+    const r = i % 12, u = Math.pow(R[i][0], .8), len = r % 2 ? 110 : 152, a = r / 12 * Math.PI * 2 - Math.PI / 2 + (t - COLLAPSE) * .12;
+    const gr = out5(prog(t, COLLAPSE, 1.1)), w = (R[i][1] - .5) * 16 * (1 - u * .6);
+    return [Math.cos(a) * len * u * gr - Math.sin(a) * w, Math.sin(a) * len * u * gr + Math.cos(a) * w, (R[i][2] - .5) * 10, 1.1];
+  },
+};
+// [start, formation, transition seconds, swirl amount]
+const FORM = [
+  [0, "dust", 0, 0], [3.35, "burst", .35, 0], [3.72, "text", 1.7, 420], [7.2, "sphere", 1.4, 320],
+  [16.05, "lines", .8, 200], [17.65, "rain", .8, 200], [19.25, "layers", .9, 200], [20.85, "langring", .9, 220],
+  [22.45, "pixels", .9, 220], [24.05, "tunnel", .8, 160], [25.9, "halo", 1.3, 260], [34.9, "rings", 1.4, 260],
+  [42.9, "globe", 1.3, 260], [49.9, "terrain", 1.2, 300], [55.9, "sphere", 1.6, 300], [COLLAPSE, "spark", 1.0, 700],
+];
+function formState(t) { let j = 0; for (let k = 0; k < FORM.length; k++) if (t >= FORM[k][0]) j = k; return j; }
+function weightOf(name, t) {
+  const j = formState(t), [t0, n, d] = FORM[j], k = d ? inout(prog(t, t0, d)) : 1;
+  let w = 0; if (n === name) w += k; if (j > 0 && FORM[j - 1][1] === name) w += 1 - k; return w;
+}
+
+const PX = new Float32Array(NP), PY = new Float32Array(NP), PZ = new Float32Array(NP), PV = new Uint8Array(NP);
+function drawParticles(t, alpha) {
+  const j = formState(t), [t0, name, d, sw] = FORM[j];
+  const prev = j > 0 ? FORM[j - 1][1] : null;
+  g.globalCompositeOperation = "lighter";
+  for (let i = 0; i < NP; i++) {
+    let p = F[name](i, t);
+    if (prev && d > 0) {
+      const delay = R[i][5] * d * .4, k = inout(prog(t, t0 + delay, d * .6));
+      if (k < 1) {
+        const q = F[prev](i, t), s = Math.sin(Math.PI * k) * sw, dv = DIR[(i * 7) % NP];
+        p = [lerp(q[0], p[0], k) + dv[0] * s, lerp(q[1], p[1], k) + dv[1] * s, lerp(q[2], p[2], k) + dv[2] * s, lerp(q[3], p[3], k)];
+      }
+    }
+    const pr = proj(p[0], p[1], p[2]);
+    if (!pr) { PV[i] = 0; continue; }
+    PV[i] = 1; PX[i] = pr[0]; PY[i] = pr[1]; PZ[i] = pr[2];
+    if (pr[0] < -60 || pr[0] > W + 60 || pr[1] < -60 || pr[1] > H + 60) continue;
+    const depth = clamp(1.25 - pr[2] / 1400);
+    const sz = Math.min(90, (3 + 4.5 * p[3]) * pr[3]);
+    g.globalAlpha = Math.min(1, alpha * clamp(p[3]) * (.35 + .65 * depth));
+    g.drawImage(DOT, pr[0] - sz, pr[1] - sz, sz * 2, sz * 2);
+    if (p[3] > 1.15 || (i % 23 === 0 && depth > .9)) { const s2 = sz * .45; g.drawImage(WDOT, pr[0] - s2, pr[1] - s2, s2 * 2, s2 * 2); }
+  }
+  g.globalAlpha = 1; g.globalCompositeOperation = "source-over";
+}
+function drawSphereLinks(t) {
+  const w = weightOf("sphere", t); if (w < .02) return;
+  const tick = Math.floor(t * 5); g.lineWidth = 1;
+  for (let k = 0; k < PAIRS.length; k++) {
+    const [i, j] = PAIRS[k]; if (!PV[i] || !PV[j]) continue;
+    const hot = hash(tick, k) > .985, dd = clamp(1.2 - (PZ[i] + PZ[j]) / 2 / 500);
+    const a = w * (.08 + .3 * dd) * (hot ? 3 : 1);
+    g.strokeStyle = hot ? `rgba(255,210,180,${Math.min(1, a)})` : `rgba(255,122,69,${a})`;
+    g.beginPath(); g.moveTo(PX[i], PY[i]); g.lineTo(PX[j], PY[j]); g.stroke();
+  }
+}
+function drawLayerEdges(t) {
+  const w = weightOf("layers", t); if (w < .02) return;
+  g.lineWidth = 1; g.strokeStyle = `rgba(255,122,69,${.16 * w})`;
+  g.beginPath();
+  for (const [a, b] of EDGES) { const p = proj(NODES[a].x, NODES[a].y, 0), q = proj(NODES[b].x, NODES[b].y, 0); if (p && q) { g.moveTo(p[0], p[1]); g.lineTo(q[0], q[1]); } }
+  g.stroke();
+}
+/* stars (screen-space warp field) */
+const STARS = Array.from({ length: 600 }, () => ({ x: rnd() * 2 - 1, y: rnd() * 2 - 1, z: rnd(), b: rnd() }));
+const ENV = [[0, { spd: .01, st: 0 }], [1, { spd: .01, st: .5 }], [2.8, { spd: .02, st: .6 }], [3.35, { spd: 1.0, st: 1 }], [4.4, { spd: .04, st: .5 }], [49.8, { spd: .04, st: .5 }], [50.4, { spd: .25, st: .6 }], [55.8, { spd: .05, st: .4 }], [COLLAPSE, { spd: 1.2, st: 1 }], [60.4, { spd: .03, st: .5 }]];
+const WD = new Map();
+function warpDist(t) { const k = Math.round(t * 20); if (k <= 0) return 0; if (!WD.has(k)) WD.set(k, warpDist((k - 1) / 20) + kf(ENV, k / 20).spd * .05); return WD.get(k); }
+function drawStars(t) {
+  const e = kf(ENV, t), wd = warpDist(t), fov = 700;
+  for (const s of STARS) {
+    const z = ((s.z - t * .02 - wd) % 1 + 1) % 1 + .02;
+    const px = W / 2 + s.x * fov / z * .9, py = H / 2 + s.y * fov / z * .6;
+    if (px < -50 || px > W + 50 || py < -50 || py > H + 50) continue;
+    const a = e.st * (.25 + .75 * s.b) * clamp((1 - z) * 1.6) * clamp(z * 8), sz = (1 - z) * 3 + .6;
+    if (e.spd > .15) {
+      const z2 = z + e.spd * .06, qx = W / 2 + s.x * fov / z2 * .9, qy = H / 2 + s.y * fov / z2 * .6;
+      g.strokeStyle = `rgba(255,220,200,${a})`; g.lineWidth = sz * .7; g.beginPath(); g.moveTo(qx, qy); g.lineTo(px, py); g.stroke();
+    } else { g.globalAlpha = a; g.fillStyle = "#F2EEE8"; g.fillRect(px, py, sz * .7, sz * .7); g.globalAlpha = 1; }
+  }
+}
+function leader(x0, y0, x1, y1, k, a = 1) {
+  if (k <= 0) return;
+  g.strokeStyle = `rgba(255,122,69,${.85 * a})`; g.lineWidth = 1.5;
+  g.beginPath(); g.moveTo(x0, y0); g.lineTo(lerp(x0, x1, k), lerp(y0, y1, k)); g.stroke();
+  g.fillStyle = `rgba(255,122,69,${a})`; g.beginPath(); g.arc(x0, y0, 5, 0, 7); g.fill();
+  g.strokeStyle = `rgba(255,122,69,${.5 * a})`; g.beginPath(); g.arc(x0, y0, 12, 0, 7); g.stroke();
+}
+
+/* ================================= setup ================================= */
+buildScramble($("#t1"), "CLAUDE");
+buildScramble($("#s1en"), "AN AI ASSISTANT BY ANTHROPIC");
+buildScramble($("#t8"), "CLAUDE");
+buildScramble($("#s2k"), "[01] NEURAL CORE · 认识 CLAUDE");
+buildScramble($("#s5k"), "[04] MODEL FAMILY · 模型家族");
+buildScramble($("#s6k"), "[05] EVERYWHERE · 随时随地");
+buildScramble($("#s7k"), "[06] PRINCIPLES · 核心原则");
+splitChars($("#s1cn")); splitChars($("#h2a")); splitChars($("#h2b")); splitChars($("#h6"));
+["#fc0", "#fc1", "#fc2"].forEach(s => splitChars($(s)));
+$("#s8sub").textContent = OUTRO; splitChars($("#s8sub"));
+$("#langs").innerHTML = LANGS.map(w => `<div class="lw">${w}</div>`).join("");
+CUTS.forEach(c => { const s = document.createElement("s"); s.style.left = (100 * c / DURATION) + "%"; $("#track").appendChild(s); });
+{ const NSV = "http://www.w3.org/2000/svg"; for (let i = 0; i < 12; i++) { const l = document.createElementNS(NSV, "line"); l.setAttribute("stroke", "#FF7A45"); l.setAttribute("stroke-linecap", "round"); l.setAttribute("stroke-width", i % 2 ? 13 : 17); $("#spark").appendChild(l); } }
+for (let i = 0; i < 16; i++) $("#glitch").appendChild(document.createElement("i"));
+{ const gc = $("#grain").getContext("2d"), im = gc.createImageData(512, 512), r = mulberry(99); for (let i = 0; i < im.data.length; i += 4) { const v = r() * 255; im.data[i] = im.data[i + 1] = im.data[i + 2] = v; im.data[i + 3] = 255; } gc.putImageData(im, 0, 0); }
+$("#preload").textContent = GLYPHS + A + Q + OUTRO + LANGS.join("") + BOOT.flat().join("") + CAPS.map(c => c.cn + c.cap + c.en).join("") + MODELS.map(m => m.d + m.tier).join("") + "✓◆›—→0123456789PAGES READ ASSEMBLING%";
+
+/* ================================= scenes ================================= */
+let LB = {}; // screen anchors computed in the canvas pass, consumed by the DOM pass
+const update = {
+  s1(t) {
+    let html = "", tt = .3;
+    BOOT.forEach(([l, ok]) => { const s = tt; tt += l.length / 55 + .12; if (t < s) return; const n = Math.floor((t - s) * 55); html += l.slice(0, n) + (n >= l.length && ok ? `<span class="ok">${ok}</span>` : "") + "\n"; });
+    const boot = $("#boot"); boot.innerHTML = html;
+    // CRT power-off: squash vertically, then horizontally
+    const k1 = prog(t, 2.95, .22), k2 = prog(t, 3.17, .18);
+    setT(boot, { o: t < 3.35 ? 1 : 0, sx: lerp(1, .002, in3(k2)), sy: lerp(1 + .02 * t, .004, out3(k1)) });
+    if (k1 > 0) boot.style.filter = `brightness(${1 + k1 * 3})`;
+    if (life($("#t1"), t, 5.0, 7.45, { enter: "zoom", d: .8 })) scramble($("#t1"), t, 5.0, .08, .5);
+    if (life($("#s1cn"), t, 5.6, 7.4, { enter: "rise", d: .01, dist: 0 })) charsIn($("#s1cn"), t, 5.7);
+    if (life($("#s1en"), t, 6.0, 7.4, { enter: "rise", d: .01, dist: 0 })) scramble($("#s1en"), t, 6.0, .02, .35);
+  },
+  s2(t) {
+    if (life($("#s2k"), t, 8.3, 15.75, { enter: "rise", d: .01, dist: 0 })) scramble($("#s2k"), t, 8.3, .02, .3);
+    if (life($("#h2a"), t, 8.4, 15.8, { enter: "rise", d: .01, dist: 0 })) flipIn($("#h2a"), t, 8.45, .09);
+    if (life($("#h2b"), t, 8.4, 15.85, { enter: "rise", d: .01, dist: 0 })) flipIn($("#h2b"), t, 8.95, .09);
+    $$("#desc div").forEach((el, i) => life(el, t, 10.1 + i * .3, 15.7 + i * .04, { enter: "wipe", d: .7 }));
+    for (let i = 0; i < 3; i++) { const el = $("#lb" + i), p = LB["lb" + i]; if (!p) { el.style.opacity = 0; continue; } el.style.left = p[0] + "px"; el.style.top = p[1] + "px"; life(el, t, 11.3 + i * .4, 15.7, { enter: "left", dist: 30 }); }
+  },
+  s3(t) {
+    let j = -1; for (let k = 0; k < 6; k++) if (t >= BEATS[k]) j = k;
+    if (j < 0) return;
+    const a = BEATS[j], b = BEATS[j + 1], c = CAPS[j];
+    const idx = $("#mIdx"); idx.textContent = `${String(j + 1).padStart(2, "0")} / 06`; life(idx, t, a + .05, b, { enter: "left", xd: .2, dist: 30 });
+    const en = $("#mEn"); setScramble(en, c.en); if (life(en, t, a + .1, b, { enter: "rise", d: .01, dist: 0, xd: .2 })) scramble(en, t, a + .1, .03, .3);
+    const cn = $("#mCn"); cn.textContent = c.cn; life(cn, t, a + .05, b, { enter: "zoom", d: .5, xd: .22 });
+    cn.style.letterSpacing = `${8 + 60 * (1 - out3(prog(t, a + .05, .6)))}px`;
+    const cap = $("#mCap"); cap.textContent = typed(c.cap, t, a + .45, 26); life(cap, t, a + .4, b, { enter: "rise", d: .2, dist: 10, xd: .2 });
+    $("#mBar i").style.width = 100 * clamp((t - a) / (b - a)) + "%"; life($("#mBar"), t, a + .1, b, { enter: "wipe", d: .4, xd: .15 });
+    const sw = prog(t, a, .45); $("#sweep").style.opacity = sw > 0 && sw < 1 ? (1 - sw) : 0; $("#sweep").style.transform = `translateX(${lerp(-40, W + 40, out3(sw))}px)`;
+    const snip = $("#snip");
+    if (j === 1) {
+      const n = Math.max(0, Math.floor((t - a - .3) * 22)); let used = 0, h = "";
+      for (const [cl, s] of SNIP) { const tk = Array.from(s).slice(0, Math.max(0, n - used)).join(""); used += Array.from(s).length; if (tk) h += `<span class="${cl}">${tk}</span>`; }
+      snip.innerHTML = h + `<span class="caret" style="height:26px;width:12px;vertical-align:-4px;opacity:${caretOn(t) ? 1 : 0}"></span>`;
+      snip.style.left = "1180px"; snip.style.top = "780px"; life(snip, t, a + .25, b, { enter: "rise", xd: .2 });
+    } else snip.style.opacity = 0;
+    $$("#langs .lw").forEach((el, i) => {
+      if (j !== 3) { el.style.opacity = 0; return; }
+      const ang = i / LANGS.length * 6.28 + t * .4, p = proj(Math.cos(ang) * 420, 0, Math.sin(ang) * 420);
+      if (!p) { el.style.opacity = 0; return; }
+      const vis = prog(t, a + .35 + i * .05, .4) * (1 - prog(t, b - .2, .2));
+      el.style.left = p[0] + "px"; el.style.top = p[1] - 40 * p[3] + "px";
+      el.style.opacity = vis * clamp(1.1 - p[2] / 600); el.style.transform = `translate(-50%,-50%) scale(${p[3]})`;
+      el.style.color = p[2] < -200 ? "var(--acc2)" : "var(--fg)";
+    });
+    $$("#rets .ret").forEach((el, i) => {
+      if (j !== 4) { el.style.opacity = 0; return; }
+      const box = [[-8.5, -9.5, 18, 12], [-19.5, -11.5, 7, 5], [10.5, 2.5, 8, 8]][i];
+      const p = proj(box[0] * 24, box[1] * 24, 0), q = proj((box[0] + box[2]) * 24, (box[1] + box[3]) * 24, 0);
+      if (!p || !q) return;
+      const k = out5(prog(t, a + .4 + i * .3, .4));
+      const cx = (p[0] + q[0]) / 2, cy = (p[1] + q[1]) / 2, w = Math.abs(q[0] - p[0]) * lerp(2.2, 1, k), h = Math.abs(q[1] - p[1]) * lerp(2.2, 1, k);
+      Object.assign(el.style, { left: cx - w / 2 + "px", top: cy - h / 2 + "px", width: w + "px", height: h + "px", opacity: k * (1 - prog(t, b - .2, .2)) });
+    });
+    const pg = $("#pages");
+    if (j === 5) {
+      const n = Math.floor(lerp(1, 999, in3(prog(t, a + .2, 1.3))));
+      pg.innerHTML = `${String(n).padStart(3, "0")}<small>PAGES READ</small>`; pg.style.left = "1320px"; pg.style.top = "760px";
+      life(pg, t, a + .15, b, { enter: "zoom", xd: .2 });
+    } else pg.style.opacity = 0;
+  },
+  s4(t) {
+    life($("#flow"), t, 26.3, 34.7, { enter: "rise", xd: .3 });
+    const ws = $$("#flow .w"), ars = $$("#flow .ar i"), at = [26.9, 28.6, 30.2];
+    ws.forEach((w, i) => { w.classList.toggle("on", t > at[i]); const k = out3(prog(t, at[i], .4)); w.style.transform = `scale(${1 + .18 * Math.sin(Math.PI * k)})`; });
+    ars[0].style.width = 100 * out3(prog(t, 28.0, .6)) + "%"; ars[1].style.width = 100 * out3(prog(t, 29.6, .6)) + "%";
+    // 3D terminal: flies in, drifts, flies past the camera
+    const term = $("#term"), kin = out5(prog(t, 26.1, 1.5)), kout = in3(prog(t, 34.45, .55));
+    const ry = lerp(-42, -10, kin) + (t - 26) * 1.2 + kout * 25, rx = lerp(18, 5, kin) - (t - 26) * .35, tz = lerp(-900, 0, kin) + kout * 900;
+    term.style.transform = `translate3d(0, ${Math.sin(t * .9) * 8}px, ${tz}px) rotateY(${ry}deg) rotateX(${rx}deg)`;
+    term.style.opacity = clamp(kin * 1.5) * (1 - kout);
+    $("#q4").innerHTML = typed(Q, t, 27.0, 14) + (t < 28.3 ? `<span class="caret" style="opacity:${caretOn(t) ? 1 : 0}"></span>` : "");
+    const a0 = 30.2;
+    if (t < a0) {
+      $("#a4").innerHTML = t < 28.5 ? "" : `<span class="think">THINKING ${[0, 1, 2, 3].map(i => `<i style="opacity:${.25 + .75 * Math.max(0, Math.sin(t * 9 - i * .8))}"></i>`).join("")}</span>`;
+    } else {
+      const ch = Array.from(A), n = Math.min(ch.length, Math.floor((t - a0) * 12));
+      let h = "";
+      for (let i = 0; i < n; i++) {
+        const age = (t - a0) - i / 12, k = out3(clamp(age / .35));
+        const col = age < .5 ? `color:var(--acc2);text-shadow:0 0 14px rgba(255,122,69,${1 - age * 2})` : "";
+        h += `<span class="tok" style="opacity:${k};transform:translateY(${(1 - k) * 14}px) scale(${lerp(1.4, 1, k)});${col}">${ch[i]}</span>`;
+      }
+      $("#a4").innerHTML = h + `<span class="caret" style="opacity:${n < ch.length || caretOn(t) ? 1 : 0}"></span>`;
+    }
+    $$("#trace .step").forEach((s, i) => { const st = 28.6 + i * .32; s.classList.toggle("on", t > st + .2); const k = out3(prog(t, st, .4)); s.style.opacity = k; s.style.transform = `translateX(${(1 - k) * 30}px)`; });
+    $("#trace .spine").style.height = 76 * 4 * out3(prog(t, 28.6, 1.5)) + "px";
+    life($("#note4"), t, 28, 34.6, { enter: "rise", dist: 0 });
+  },
+  s5(t) {
+    if (life($("#s5k"), t, 35.3, 42.75, { enter: "rise", d: .01, dist: 0 })) scramble($("#s5k"), t, 35.3, .02, .3);
+    const act = modelActive(t), nm = $("#mName"), ti = $("#mTier"), de = $("#mDesc");
+    if (act >= 0 && act <= 2) {
+      const a = MODEL_PH[act], b = MODEL_PH[act + 1], m = MODELS[act];
+      setScramble(nm, m.n); if (life(nm, t, a, b, { enter: "rise", d: .01, dist: 0, xd: .25 })) scramble(nm, t, a + .05, .07, .4);
+      ti.textContent = m.tier; life(ti, t, a + .1, b, { enter: "left", xd: .2 });
+      de.textContent = typed(m.d, t, a + .5, 22); life(de, t, a + .45, b, { enter: "rise", dist: 12, xd: .2 });
+    } else { nm.style.opacity = ti.style.opacity = de.style.opacity = 0; }
+    for (let i = 0; i < 3; i++) { const el = $("#rl" + i), p = LB["rl" + i]; if (!p) { el.style.opacity = 0; continue; } el.style.left = p[0] + "px"; el.style.top = p[1] + "px"; life(el, t, MODEL_PH[3] + i * .15, 42.75, { enter: "left", dist: 20, xd: .25 }); }
+  },
+  s6(t) {
+    if (life($("#s6k"), t, 43.3, 49.75, { enter: "rise", d: .01, dist: 0 })) scramble($("#s6k"), t, 43.3, .02, .3);
+    if (life($("#h6"), t, 43.4, 49.8, { enter: "rise", d: .01, dist: 0 })) flipIn($("#h6"), t, 43.45, .1);
+    life($("#h6s"), t, 44.1, 49.75, { enter: "wipe", d: .7 });
+    for (let i = 0; i < 3; i++) { const el = $("#cp" + i), p = LB["cp" + i]; if (!p) { el.style.opacity = 0; continue; } el.style.left = p[0] + "px"; el.style.top = p[1] + "px"; life(el, t, 44.8 + i * .55, 49.7, { enter: "zoom", d: .5 }); }
+    $("#cmd6").textContent = typed(CMD, t, 46.2, 10); $("#caret6").style.opacity = caretOn(t) ? 1 : 0;
+  },
+  s7(t) {
+    if (life($("#s7k"), t, 50.2, 55.75, { enter: "rise", d: .01, dist: 0 })) scramble($("#s7k"), t, 50.2, .02, .3);
+    FLY.forEach((a, i) => {
+      const fw = $("#fw" + i), fc = $("#fc" + i), fd = $("#fd" + i), u = t - a;
+      if (u < 0 || u > 1.75) { fw.style.opacity = fc.style.opacity = fd.style.opacity = 0; return; }
+      const kin = out3(clamp(u / .45)), kpass = in3(clamp((u - 1.4) / .35));
+      const s = u < .45 ? lerp(.18, 1, kin) : u < 1.4 ? 1 + (u - .45) * .13 : lerp(1.12, 5, kpass);
+      setT(fw, { o: kin * (1 - kpass), s, blur: (1 - kin) * 12 + kpass * 14 });
+      charsIn(fc, t, a + .3, .07); setT(fc, { o: 1 - clamp((u - 1.35) / .25), s: 1 + kpass * .4 });
+      life(fd, t, a + .55, a + 1.6, { enter: "rise", dist: 14, exit: "fade", xd: .2 });
+    });
+    life($("#cai"), t, 54.4, 55.8, { enter: "rise", dist: 14 });
+  },
+  s8(t) {
+    const pct = Math.floor(100 * clamp((t - 56.3) / 2.6));
+    if (life($("#asm"), t, 56.3, 59.05, { enter: "rise", exit: "fade", xd: .15 })) $("#asm").innerHTML = `ASSEMBLING &nbsp;<b>${String(pct).padStart(3, "0")}%</b>`;
+    const rays = $("#spark").children;
+    for (let i = 0; i < 12; i++) {
+      const ang = i / 12 * Math.PI * 2 - Math.PI / 2 + (t - COLLAPSE) * .12, len = (i % 2 ? 110 : 152) * (1 + .03 * Math.sin(t * 3 + i));
+      rays[i].setAttribute("x1", 0); rays[i].setAttribute("y1", 0); rays[i].setAttribute("x2", Math.cos(ang) * len); rays[i].setAttribute("y2", Math.sin(ang) * len);
+    }
+    $("#spark").style.opacity = out3(prog(t, 59.7, .8));
+    if (life($("#t8"), t, 59.9, 70, { enter: "zoom", d: .8 })) scramble($("#t8"), t, 59.9, .08, .45);
+    $("#s8sub").style.opacity = t > 60.8 ? 1 : 0; charsIn($("#s8sub"), t, 60.9, .04);
+    life($("#url"), t, 61.8, 70, { enter: "rise", dist: 16 });
+  },
+};
+
+/* ================================= frame ================================= */
+function render(t) {
+  CAM = kf(CAMK, t);
+  const [sx, sy] = shake(t); CAM.ox += sx; CAM.oy += sy;
+  g.fillStyle = "#050507"; g.fillRect(0, 0, W, H);
+  const bg = g.createRadialGradient(W / 2 + CAM.ox * .5, H * .55, 0, W / 2 + CAM.ox * .5, H * .55, 1150);
+  bg.addColorStop(0, "rgba(64,28,14,.6)"); bg.addColorStop(1, "rgba(5,5,7,0)"); g.fillStyle = bg; g.fillRect(0, 0, W, H);
+  drawStars(t);
+  drawLayerEdges(t);
+  drawParticles(t, clamp(t / .6));
+  drawSphereLinks(t);
+  LB = {};
+  // S2: labels pinned to points on the rotating sphere
+  if (t > 11 && t < 16) {
+    [200, 330, 560].forEach((idx, i) => {
+      const q = rotX(rotY(FIB[idx], sphereRot(t)), -.3), p = proj(q[0] * 300, q[1] * 300, q[2] * 300);
+      if (!p) return;
+      const ly = 330 + i * 190;
+      leader(p[0], p[1], 1095, ly + 22, out3(prog(t, 11.1 + i * .4, .5)) * (1 - prog(t, 15.5, .3)), clamp(1.3 - p[2] / 300));
+      LB["lb" + i] = [855, ly - 20];
+    });
+  }
+  // S5: tags on the three orbit rings
+  if (t > 41.5 && t < 43) {
+    RINGS.forEach((ring, i) => {
+      const p = proj(...ringPoint(i, 2.5 + i * .35)); if (!p) return;
+      leader(p[0], p[1], p[0] - 120, p[1] - 60, out3(prog(t, MODEL_PH[3] + i * .15, .4)) * (1 - prog(t, 42.7, .3)));
+      LB["rl" + i] = [p[0] - 300, p[1] - 76];
+    });
+  }
+  // S6: product chips pinned to globe cities
+  if (t > 44.5 && t < 50) {
+    CHIP_CITY.forEach((ci, i) => {
+      const q = rotY(CITIES[ci], globeRot(t)), p = proj(q[0] * GLOBE_R, q[1] * GLOBE_R, q[2] * GLOBE_R); if (!p) return;
+      const cy = 520 + i * 150;
+      const k = out3(prog(t, 44.7 + i * .55, .5)) * (1 - prog(t, 49.5, .3));
+      leader(p[0], p[1], 545, cy + 55, k, clamp(1.4 - p[2] / 300));
+      LB["cp" + i] = [140, cy];
+    });
+  }
+  // outro shock rings
+  if (t > COLLAPSE && t < COLLAPSE + 1.3) {
+    const k = prog(t, COLLAPSE, 1.3), c = [W / 2 + CAM.ox, H / 2 + CAM.oy];
+    for (let r = 0; r < 2; r++) { const kk = clamp(k * (1 - r * .25)); g.strokeStyle = `rgba(255,170,130,${(1 - kk) * .9})`; g.lineWidth = 4 * (1 - kk) + .5; g.beginPath(); g.arc(c[0], c[1], 10 + out3(kk) * (900 - r * 250), 0, 7); g.stroke(); }
+  }
+
+  // DOM scenes
+  let cur = 0;
+  SCENES.forEach((sc, i) => { const el = $("#" + sc.id), on = t >= sc.a - .05 && t < sc.b; el.style.visibility = on ? "visible" : "hidden"; if (on) update[sc.id](t); if (t >= sc.a) cur = i; });
+  $("#world").style.transform = `translate(${sx}px, ${sy}px)`;
+
+  // glitch slices on cuts, montage beats and the collapse
+  let gk = 0;
+  for (const c of [...CUTS, ...BEATS.slice(1, 6), COLLAPSE]) { const d = Math.abs(t - c), big = CUTS.includes(c) || c === COLLAPSE, wdt = big ? .3 : .16; if (d < wdt) gk = Math.max(gk, (1 - d / wdt) * (big ? 1 : .6)); }
+  const sl = $("#glitch").children, fr = Math.floor(t * FPS);
+  for (let i = 0; i < sl.length; i++) {
+    const el = sl[i]; if (!(gk > 0 && hash(fr, i) < gk * .9)) { el.style.opacity = 0; continue; }
+    Object.assign(el.style, { opacity: .35 + .65 * hash(fr, i + 50), top: hash(fr, i + 100) * H + "px", height: 2 + hash(fr, i + 150) * 46 + "px", width: 20 + hash(fr, i + 200) * 80 + "%", left: hash(fr, i + 250) * 40 + "%", background: hash(fr, i + 300) > .5 ? "rgba(255,122,69,.85)" : "rgba(242,238,232,.7)" });
+  }
+  $("#flash").style.opacity = gk * .5 + (t > COLLAPSE && t < COLLAPSE + .4 ? (1 - (t - COLLAPSE) / .4) * .8 : 0);
+
+  // HUD
+  $("#hud").style.opacity = Math.min(prog(t, .2, .6), 1 - prog(t, DURATION - 1.4, .8));
+  const f = Math.floor(t * FPS), ss = Math.floor(t);
+  $("#hud-tr").textContent = `T+${String(Math.floor(ss / 60)).padStart(2, "0")}:${String(ss % 60).padStart(2, "0")}:${String(f % FPS).padStart(2, "0")}`;
+  $("#hud-bl").textContent = SCENES[cur].code;
+  $("#track i").style.width = (100 * t / DURATION) + "%";
+  $("#grain").style.transform = `translate(${hash(f, 1) * 128}px, ${hash(f, 2) * 128}px)`;
+  $("#black").style.opacity = Math.max(1 - prog(t, 0, .5), prog(t, DURATION - 1.2, 1.2));
+}
+
+window.DURATION = DURATION;
+window.render = render;
+window.ready = document.fonts.ready.then(() => { sampleText(); return new Promise(r => setTimeout(r, 300)); });
+render(0);
+</script>
+</body>
+</html>
