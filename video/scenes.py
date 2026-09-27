@@ -957,7 +957,7 @@ def s5_3(t, d):
             sparkle((lin_x + boy_x) / 2 + math.cos(k * 1.26) * 220, 450 + math.sin(k * 1.26) * 150,
                     pop(t, 11.3 + k * 0.1) * 0.9)
     if t > 11.8:
-        ring_bell(260, 230, 0.8, t, ringing=11.8 < t < 13.8)
+        ring_bell(1760, 230, 0.8, t, ringing=11.8 < t < 13.8)
     if glow > 0:
         blob(W / 2, H / 2, 900, 520, "lamp", 60 * glow, blur=120)
         particles("heart", t, 10, (0, 0, W, H), seed=51, a=200 * glow, speed=0.4)
