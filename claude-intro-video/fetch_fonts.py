@@ -12,9 +12,9 @@ ROOT = pathlib.Path(__file__).parent
 OUT = ROOT / "fonts"
 UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0 Safari/537.36"
 FAMILIES = {
-    "Noto Sans SC": "400;500;700",
-    "Noto Serif SC": "500;700",
-    "JetBrains Mono": "500",
+    "Noto Sans SC": "300;400;500;700;900",
+    "Space Grotesk": "500;700",
+    "JetBrains Mono": "400;500;700",
 }
 
 

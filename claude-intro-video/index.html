@@ -2,459 +2,796 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<title>Claude 介绍视频</title>
+<title>Claude Intro</title>
 <link href="fonts/fonts.css" rel="stylesheet">
 <style>
   :root {
-    --bg: #F4F0E8;
-    --ink: #1F1E1C;
-    --muted: #6B665E;
-    --accent: #D97757;
-    --accent-deep: #B85C3E;
-    --accent-soft: #F3DED2;
-    --card: #FFFDF9;
-    --line: #E4DDD1;
-    --serif: "Noto Serif SC", "WenQuanYi Zen Hei", serif;
-    --sans: "Noto Sans SC", "WenQuanYi Zen Hei", sans-serif;
-    --mono: "JetBrains Mono", "DejaVu Sans Mono", monospace;
+    --bg: #050507;
+    --fg: #F2EEE8;
+    --dim: rgba(242,238,232,.58);
+    --faint: rgba(242,238,232,.14);
+    --hair: rgba(242,238,232,.22);
+    --acc: #FF7A45;
+    --acc2: #FFB48C;
+    --glass: rgba(20,18,20,.55);
+    --disp: "Space Grotesk", "Noto Sans SC", sans-serif;
+    --sans: "Noto Sans SC", sans-serif;
+    --mono: "JetBrains Mono", "Noto Sans SC", monospace;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--bg); }
-  body { font-family: var(--sans); color: var(--ink); position: relative; }
+  body { font-family: var(--sans); color: var(--fg); position: relative; -webkit-font-smoothing: antialiased; }
+  canvas#fx { position: absolute; inset: 0; }
+  .scene { position: absolute; inset: 0; opacity: 0; visibility: hidden; }
+  .o { opacity: 0; }
+  .mono { font-family: var(--mono); }
+  .acc { color: var(--acc); }
+  .dim { color: var(--dim); }
+  .kicker { font: 500 22px var(--mono); letter-spacing: 4px; color: var(--acc); display: flex; align-items: center; gap: 16px; }
+  .kicker::before { content: ""; width: 44px; height: 2px; background: var(--acc); box-shadow: 0 0 12px var(--acc); }
+  .ch { display: inline-block; white-space: pre; }
+  .sc { position: relative; display: inline-block; white-space: pre; }
+  .sc > i { font-style: normal; visibility: hidden; }
+  .sc > b { position: absolute; left: 0; right: 0; top: 0; text-align: center; font-weight: inherit; }
+  .glass { background: var(--glass); border: 1px solid var(--hair); backdrop-filter: blur(14px); border-radius: 18px; }
 
-  .blob { position: absolute; border-radius: 50%; filter: blur(40px); pointer-events: none; }
-  #b1 { width: 900px; height: 900px; background: radial-gradient(circle, rgba(217,119,87,.22), rgba(217,119,87,0) 70%); }
-  #b2 { width: 1100px; height: 1100px; background: radial-gradient(circle, rgba(204,170,120,.20), rgba(204,170,120,0) 70%); }
-  #b3 { width: 700px; height: 700px; background: radial-gradient(circle, rgba(120,140,170,.12), rgba(120,140,170,0) 70%); }
+  /* ---------- HUD ---------- */
+  #hud { position: absolute; inset: 0; pointer-events: none; font: 500 18px var(--mono); letter-spacing: 3px; color: var(--dim); }
+  .corner { position: absolute; width: 36px; height: 36px; border-color: var(--hair); border-style: solid; border-width: 0; }
+  .c1 { left: 48px; top: 48px; border-left-width: 2px; border-top-width: 2px; }
+  .c2 { right: 48px; top: 48px; border-right-width: 2px; border-top-width: 2px; }
+  .c3 { left: 48px; bottom: 48px; border-left-width: 2px; border-bottom-width: 2px; }
+  .c4 { right: 48px; bottom: 48px; border-right-width: 2px; border-bottom-width: 2px; }
+  #hud-tl { position: absolute; left: 100px; top: 58px; display: flex; gap: 14px; align-items: center; color: var(--fg); }
+  #hud-tl .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--acc); box-shadow: 0 0 12px var(--acc); }
+  #hud-tr { position: absolute; right: 100px; top: 58px; }
+  #hud-bl { position: absolute; left: 100px; bottom: 58px; }
+  #hud-br { position: absolute; right: 100px; bottom: 58px; }
+  #track { position: absolute; left: 420px; right: 420px; bottom: 66px; height: 2px; background: var(--faint); }
+  #track i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--acc); box-shadow: 0 0 10px var(--acc); }
+  #track s { position: absolute; top: -5px; width: 2px; height: 12px; background: var(--hair); }
 
-  .scene { position: absolute; inset: 0; opacity: 0; }
-  .r { opacity: 0; will-change: transform, opacity; }
+  /* ---------- S1 BOOT ---------- */
+  #boot { position: absolute; left: 140px; top: 170px; font: 400 26px/1.9 var(--mono); color: var(--dim); white-space: pre; }
+  #boot .ok { color: var(--acc); }
+  #t1 { position: absolute; left: 0; right: 0; top: 420px; text-align: center; font: 700 230px/1 var(--disp); letter-spacing: 46px; padding-left: 46px; text-shadow: 0 0 40px rgba(255,122,69,.45); }
+  #t1 .sc > b { color: var(--acc); }
+  #t1 .sc.done > b { color: var(--fg); }
+  #s1sub { position: absolute; left: 0; right: 0; top: 700px; text-align: center; }
+  #s1sub .cn { font: 300 44px var(--sans); letter-spacing: 14px; }
+  #s1sub .en { margin-top: 22px; font: 500 22px var(--mono); letter-spacing: 8px; color: var(--acc); }
 
-  /* chrome */
-  #chrome { position: absolute; inset: 0; opacity: 0; }
-  #brand { position: absolute; left: 96px; top: 64px; display: flex; align-items: center; gap: 14px; font: 500 26px var(--serif); }
-  #brand svg { width: 34px; height: 34px; }
-  #pager { position: absolute; right: 96px; top: 70px; font: 500 22px var(--mono); color: var(--muted); letter-spacing: 2px; }
-  #progress { position: absolute; left: 96px; right: 96px; bottom: 64px; height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
-  #progress i { display: block; height: 100%; width: 0; background: var(--accent); }
+  /* ---------- S2 NEURAL ---------- */
+  #s2 .col { position: absolute; left: 140px; top: 200px; width: 860px; }
+  #s2 h1 { margin-top: 36px; font: 900 124px/1.12 var(--sans); letter-spacing: 4px; }
+  #s2 h1 .grad { color: var(--acc); text-shadow: 0 0 36px rgba(255,122,69,.45); }
+  #s2 .body { margin-top: 40px; font: 300 32px/1.75 var(--sans); color: var(--dim); }
+  #s2 .body b { color: var(--fg); font-weight: 500; }
+  #specs { margin-top: 44px; display: flex; flex-direction: column; gap: 18px; width: 700px; }
+  .spec { display: grid; grid-template-columns: 250px 110px 1fr; align-items: center; font: 500 20px var(--mono); letter-spacing: 3px; color: var(--dim); }
+  .spec .cn { font: 500 26px var(--sans); color: var(--fg); letter-spacing: 2px; }
+  .spec .bar { height: 2px; background: var(--faint); position: relative; }
+  .spec .bar i { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--acc); box-shadow: 0 0 10px var(--acc); }
+  .callout { position: absolute; font: 500 18px var(--mono); letter-spacing: 3px; color: var(--fg); white-space: nowrap; }
+  .callout span { color: var(--acc); }
 
-  .kicker { font: 500 26px var(--mono); color: var(--accent); letter-spacing: 3px; }
-  .h2 { font: 700 76px/1.2 var(--serif); letter-spacing: 1px; }
-  .lead { font: 400 36px/1.7 var(--sans); color: var(--muted); }
+  /* ---------- S3 MATRIX ---------- */
+  #s3 .head { position: absolute; left: 140px; top: 150px; display: flex; align-items: flex-end; gap: 40px; }
+  #s3 h2, #s4 h2, #s5 h2, #s6 h2 { font: 900 72px/1.1 var(--sans); letter-spacing: 3px; margin-top: 22px; }
+  #s3 .head .en { font: 500 22px var(--mono); letter-spacing: 6px; color: var(--dim); padding-bottom: 12px; }
+  #matrix { position: absolute; left: 140px; right: 140px; top: 340px; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: 300px 300px; gap: 28px; }
+  .panel { position: relative; padding: 30px 34px; background: rgba(18,16,18,.5); }
+  .panel > svg.frame { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .panel > svg.frame rect { fill: none; stroke: var(--hair); stroke-width: 1.5; }
+  .panel > svg.frame path { fill: none; stroke: var(--acc); stroke-width: 3; }
+  .panel .top { display: flex; justify-content: space-between; font: 500 18px var(--mono); letter-spacing: 3px; color: var(--dim); }
+  .panel .top .n { color: var(--acc); }
+  .panel .t { font: 700 44px var(--sans); margin-top: 18px; letter-spacing: 2px; }
+  .panel .d { font: 300 24px var(--sans); color: var(--dim); margin-top: 8px; }
+  .viz { position: absolute; left: 34px; right: 34px; bottom: 28px; height: 70px; }
+  .v-write i { display: block; height: 8px; margin-bottom: 12px; background: linear-gradient(90deg, var(--fg), rgba(242,238,232,.3)); border-radius: 4px; width: 0; }
+  .v-code { font: 500 20px/1.5 var(--mono); white-space: pre; color: var(--fg); }
+  .v-code .k { color: var(--acc); } .v-code .f { color: var(--acc2); } .v-code .c { color: var(--dim); }
+  .v-reason { display: flex; align-items: center; }
+  .v-reason .node { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--hair); flex: none; }
+  .v-reason .node.on { background: var(--acc); border-color: var(--acc); box-shadow: 0 0 18px var(--acc); }
+  .v-reason .link { flex: 1; height: 2px; background: var(--faint); position: relative; }
+  .v-reason .link i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--acc); }
+  .v-lang { font: 700 50px/70px var(--sans); color: var(--acc2); overflow: hidden; }
+  .v-vision { display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; }
+  .v-vision i { background: rgba(242,238,232,.08); border-radius: 3px; }
+  .v-vision .box { position: absolute; border: 2px solid var(--acc); box-shadow: 0 0 14px rgba(255,122,69,.6); }
+  .v-vision .box::after { content: attr(data-l); position: absolute; left: -2px; top: -26px; font: 500 15px var(--mono); color: var(--acc); letter-spacing: 2px; white-space: nowrap; }
+  .v-ctx { display: grid; grid-template-columns: repeat(40, 1fr); gap: 3px; height: 34px; }
+  .v-ctx i { background: var(--faint); border-radius: 1px; }
+  .v-ctx i.on { background: var(--acc); }
+  .v-ctx-l { margin-top: 12px; font: 500 16px var(--mono); letter-spacing: 3px; color: var(--dim); }
 
-  /* S1 */
-  #s1 .center { position: absolute; left: 0; right: 0; top: 190px; display: flex; flex-direction: column; align-items: center; }
-  #logo1 { width: 260px; height: 260px; }
-  #title1 { margin-top: 30px; font: 700 190px/1 var(--serif); letter-spacing: 4px; display: flex; }
-  #title1 span { display: inline-block; opacity: 0; }
-  #sub1 { margin-top: 44px; font: 400 44px var(--sans); color: var(--muted); letter-spacing: 6px; }
-  #rule1 { margin-top: 40px; height: 3px; width: 0; background: var(--accent); border-radius: 2px; }
+  /* ---------- S4 INTERFACE ---------- */
+  #s4 .head { position: absolute; left: 140px; top: 150px; }
+  #term { position: absolute; left: 140px; right: 140px; top: 360px; height: 560px; display: grid; grid-template-columns: 1fr 440px; overflow: hidden; }
+  #term .bar { grid-column: 1 / -1; height: 64px; border-bottom: 1px solid var(--hair); display: flex; align-items: center; padding: 0 30px; gap: 12px; font: 500 18px var(--mono); letter-spacing: 3px; color: var(--dim); }
+  #term .bar .live { margin-left: auto; color: var(--acc); display: flex; align-items: center; gap: 10px; }
+  #term .bar .live i { width: 10px; height: 10px; border-radius: 50%; background: var(--acc); box-shadow: 0 0 12px var(--acc); }
+  #term .bar .lights { display: flex; gap: 10px; margin-right: 18px; }
+  #term .bar .lights b { width: 13px; height: 13px; border-radius: 50%; background: var(--hair); }
+  #chat { padding: 40px 48px; display: flex; flex-direction: column; gap: 34px; }
+  .line { display: grid; grid-template-columns: 150px 1fr; font: 400 34px/1.7 var(--sans); }
+  .line .who { font: 700 20px/58px var(--mono); letter-spacing: 3px; color: var(--dim); }
+  .line.ai .who { color: var(--acc); }
+  .caret { display: inline-block; width: 14px; height: 34px; background: var(--acc); vertical-align: -5px; margin-left: 6px; box-shadow: 0 0 12px var(--acc); }
+  .fresh { color: var(--acc2); text-shadow: 0 0 14px rgba(255,122,69,.8); }
+  .think { display: inline-flex; gap: 8px; align-items: center; font: 500 20px var(--mono); letter-spacing: 3px; color: var(--dim); }
+  .think i { width: 6px; height: 26px; background: var(--acc); }
+  #trace { border-left: 1px solid var(--hair); padding: 40px 36px; }
+  #trace .h { font: 500 18px var(--mono); letter-spacing: 4px; color: var(--dim); margin-bottom: 26px; }
+  .step { display: flex; align-items: center; gap: 16px; font: 400 26px var(--sans); margin-bottom: 22px; }
+  .step .ix { font: 500 16px var(--mono); color: var(--acc); border: 1px solid var(--acc); border-radius: 6px; padding: 2px 8px; }
+  .step .ck { margin-left: auto; font: 500 18px var(--mono); color: var(--acc); }
+  #note4 { position: absolute; right: 140px; top: 930px; font: 400 18px var(--sans); color: rgba(242,238,232,.35); }
 
-  /* S2 */
-  #s2 .left { position: absolute; left: 140px; top: 230px; width: 1020px; }
-  #s2 .h2 { margin: 28px 0 44px; }
-  #s2 .lead div { opacity: 0; }
-  #s2 .lead b { color: var(--ink); font-weight: 500; }
-  #s2 .right { position: absolute; right: 150px; top: 250px; width: 520px; display: flex; flex-direction: column; gap: 34px; }
-  .pill { display: flex; align-items: center; gap: 28px; padding: 30px 40px; background: var(--card); border: 2px solid var(--line); border-radius: 26px; box-shadow: 0 18px 40px rgba(60,40,20,.06); }
-  .pill .dot { width: 64px; height: 64px; border-radius: 50%; background: var(--accent-soft); display: grid; place-items: center; font: 700 30px var(--serif); color: var(--accent-deep); flex: none; }
-  .pill .t { font: 700 40px var(--serif); }
-  .pill .e { font: 500 22px var(--mono); color: var(--muted); letter-spacing: 1px; margin-top: 4px; }
+  /* ---------- S5 MODELS ---------- */
+  #s5 .head { position: absolute; left: 140px; top: 150px; }
+  .mcard { position: absolute; left: 140px; width: 480px; padding: 26px 32px; }
+  .mcard .top { display: flex; align-items: center; gap: 14px; font: 500 18px var(--mono); letter-spacing: 3px; color: var(--dim); }
+  .mcard .top i { width: 12px; height: 12px; border-radius: 50%; background: var(--acc); box-shadow: 0 0 12px var(--acc); }
+  .mcard .n { font: 700 54px var(--disp); letter-spacing: 6px; margin-top: 8px; }
+  .mcard .d { font: 300 26px var(--sans); color: var(--dim); margin-top: 4px; }
 
-  /* S3 */
-  #s3 .head { position: absolute; left: 140px; top: 190px; }
-  #s3 .h2 { margin-top: 20px; }
-  #grid { position: absolute; left: 140px; right: 140px; top: 440px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 34px; }
-  .card { background: var(--card); border: 2px solid var(--line); border-radius: 28px; padding: 36px 40px; display: flex; gap: 30px; align-items: flex-start; box-shadow: 0 18px 40px rgba(60,40,20,.06); }
-  .icon { width: 84px; height: 84px; flex: none; border-radius: 22px; background: var(--accent-soft); display: grid; place-items: center; }
-  .icon svg { width: 46px; height: 46px; fill: none; stroke: var(--accent-deep); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-  .card .t { font: 700 38px var(--serif); margin-top: 4px; }
-  .card .d { font: 400 26px/1.55 var(--sans); color: var(--muted); margin-top: 12px; }
+  /* ---------- S6 NETWORK ---------- */
+  #s6 .head { position: absolute; left: 140px; top: 150px; }
+  .ncard { position: absolute; width: 460px; padding: 28px 34px; }
+  .ncard .top { font: 500 18px var(--mono); letter-spacing: 3px; color: var(--acc); }
+  .ncard .t { font: 700 46px var(--disp); margin-top: 10px; letter-spacing: 1px; }
+  .ncard .d { font: 300 25px var(--sans); color: var(--dim); margin-top: 6px; }
+  .ncard .code { margin-top: 18px; font: 500 20px var(--mono); color: var(--fg); background: rgba(0,0,0,.45); border: 1px solid var(--faint); border-radius: 10px; padding: 12px 16px; }
+  .ncard .code .p { color: var(--acc); }
+  .ncard .code .caret { height: 22px; width: 11px; vertical-align: -4px; }
 
-  /* S4 */
-  #s4 .head { position: absolute; left: 140px; top: 300px; width: 560px; }
-  #s4 .h2 { margin: 20px 0 36px; }
-  #chat { position: absolute; left: 780px; top: 270px; width: 1000px; height: 530px; background: var(--card); border: 2px solid var(--line); border-radius: 32px; box-shadow: 0 30px 70px rgba(60,40,20,.10); overflow: hidden; }
-  #chat .bar { height: 84px; border-bottom: 2px solid var(--line); display: flex; align-items: center; padding: 0 36px; gap: 14px; font: 500 28px var(--serif); }
-  #chat .bar svg { width: 34px; height: 34px; }
-  #chat .bar .lights { margin-left: auto; display: flex; gap: 10px; }
-  #chat .bar .lights i { width: 14px; height: 14px; border-radius: 50%; background: var(--line); }
-  #chat .body { padding: 44px 48px; display: flex; flex-direction: column; gap: 36px; }
-  .msg-user { align-self: flex-end; max-width: 640px; background: #EDE6DA; padding: 24px 32px; border-radius: 26px 26px 6px 26px; font: 400 32px/1.55 var(--sans); }
-  .msg-ai { display: flex; gap: 22px; align-items: flex-start; }
-  .msg-ai svg { width: 48px; height: 48px; flex: none; margin-top: 6px; }
-  .msg-ai .txt { font: 400 34px/1.7 var(--sans); max-width: 760px; min-height: 58px; }
-  .caret { display: inline-block; width: 3px; height: 38px; background: var(--accent); vertical-align: -6px; margin-left: 4px; }
-  .dots { display: flex; gap: 10px; padding-top: 24px; }
-  .dots i { width: 14px; height: 14px; border-radius: 50%; background: var(--accent); }
+  /* ---------- S7 PRINCIPLES ---------- */
+  #s7 .kicker { position: absolute; left: 140px; top: 150px; }
+  .prin { position: absolute; left: 0; right: 0; height: 200px; }
+  .prin .en { position: absolute; top: 0; font: 700 196px/200px var(--disp); letter-spacing: 10px; color: transparent; -webkit-text-stroke: 2px rgba(242,238,232,.5); white-space: nowrap; }
+  .prin .cn { position: absolute; top: 44px; font: 900 76px var(--sans); color: var(--acc); letter-spacing: 8px; text-shadow: 0 0 30px rgba(255,122,69,.5); }
+  .prin .ds { position: absolute; top: 146px; font: 300 26px var(--sans); color: var(--dim); letter-spacing: 3px; }
+  #cai { position: absolute; left: 0; right: 0; top: 930px; text-align: center; font: 500 20px var(--mono); letter-spacing: 5px; color: var(--dim); }
+  #cai b { color: var(--fg); font: 500 26px var(--sans); letter-spacing: 3px; }
 
-  /* S5 */
-  #s5 .head { position: absolute; left: 140px; top: 190px; }
-  #s5 .h2 { margin-top: 20px; }
-  #models { position: absolute; left: 140px; right: 140px; top: 440px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; }
-  .model { background: var(--card); border: 2px solid var(--line); border-radius: 30px; padding: 44px 48px; box-shadow: 0 18px 40px rgba(60,40,20,.06); }
-  .model.hl { border-color: var(--accent); }
-  .model .n { font: 700 58px var(--serif); }
-  .model .d { font: 400 28px/1.5 var(--sans); color: var(--muted); margin: 14px 0 34px; min-height: 84px; }
-  .meter { margin-top: 20px; }
-  .meter .l { display: flex; justify-content: space-between; font: 500 24px var(--sans); color: var(--muted); margin-bottom: 10px; }
-  .meter .track { height: 14px; border-radius: 7px; background: #EFE8DD; overflow: hidden; }
-  .meter .fill { height: 100%; width: 0; border-radius: 7px; background: var(--accent); }
-  .meter.sp .fill { background: #C9A26B; }
-  #note5 { position: absolute; left: 140px; top: 948px; font: 400 22px var(--sans); color: #9A948A; }
+  /* ---------- S8 OUTRO ---------- */
+  #spark { position: absolute; left: 860px; top: 230px; width: 200px; height: 200px; overflow: visible; filter: drop-shadow(0 0 24px rgba(255,122,69,.8)); }
+  #t8 { position: absolute; left: 0; right: 0; top: 500px; text-align: center; font: 700 150px/1 var(--disp); letter-spacing: 34px; padding-left: 34px; }
+  #t8 .sc > b { color: var(--acc); }
+  #t8 .sc.done > b { color: var(--fg); }
+  #s8sub { position: absolute; left: 0; right: 0; top: 710px; text-align: center; font: 300 42px var(--sans); letter-spacing: 8px; }
+  #url { position: absolute; left: 0; right: 0; top: 820px; text-align: center; }
+  #url span { display: inline-block; font: 500 26px var(--mono); letter-spacing: 6px; color: var(--acc); border: 1px solid var(--acc); padding: 12px 34px; border-radius: 999px; box-shadow: 0 0 24px rgba(255,122,69,.35), inset 0 0 18px rgba(255,122,69,.15); }
 
-  /* S6 */
-  #s6 .head { position: absolute; left: 140px; top: 190px; }
-  #s6 .h2 { margin-top: 20px; }
-  #where { position: absolute; left: 140px; right: 140px; top: 440px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; }
-  .where { background: var(--card); border: 2px solid var(--line); border-radius: 30px; padding: 44px 48px; height: 440px; box-shadow: 0 18px 40px rgba(60,40,20,.06); display: flex; flex-direction: column; }
-  .where .t { font: 700 46px var(--serif); margin-top: 30px; }
-  .where .d { font: 400 28px/1.55 var(--sans); color: var(--muted); margin-top: 14px; }
-  .where .foot { margin-top: auto; }
-  .tag { display: inline-block; font: 500 24px var(--mono); color: var(--accent-deep); background: var(--accent-soft); padding: 8px 18px; border-radius: 12px; }
-  .term { background: #262521; color: #EDE6DA; border-radius: 16px; padding: 18px 22px; font: 500 24px var(--mono); }
-  .term .pr { color: var(--accent); }
-  .term .caret { height: 26px; vertical-align: -4px; }
-
-  /* S7 */
-  #s7 .head { position: absolute; left: 0; right: 0; top: 190px; text-align: center; }
-  #s7 .h2 { margin-top: 20px; }
-  #vals { position: absolute; left: 240px; right: 240px; top: 470px; display: flex; justify-content: space-between; }
-  .val { width: 380px; text-align: center; }
-  .val .ring { width: 150px; height: 150px; margin: 0 auto; border-radius: 50%; background: var(--card); border: 2px solid var(--line); display: grid; place-items: center; box-shadow: 0 18px 40px rgba(60,40,20,.08); }
-  .val .ring svg { width: 70px; height: 70px; fill: none; stroke: var(--accent-deep); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-  .val .t { font: 700 64px var(--serif); margin-top: 34px; }
-  .val .e { font: 500 26px var(--mono); color: var(--muted); letter-spacing: 3px; margin-top: 10px; }
-  #vline { position: absolute; left: 430px; top: 544px; height: 2px; width: 0; background: repeating-linear-gradient(90deg, var(--accent) 0 12px, transparent 12px 22px); }
-  #cai { position: absolute; left: 0; right: 0; top: 880px; text-align: center; font: 400 30px var(--sans); color: var(--muted); }
-  #cai b { color: var(--ink); font-weight: 500; }
-
-  /* S8 */
-  #s8 .center { position: absolute; left: 0; right: 0; top: 200px; display: flex; flex-direction: column; align-items: center; }
-  #logo8 { width: 200px; height: 200px; }
-  #hello { margin-top: 50px; font: 700 96px var(--serif); min-height: 130px; }
-  #help { margin-top: 26px; font: 400 44px var(--sans); color: var(--muted); letter-spacing: 4px; }
-  #url { margin-top: 60px; font: 500 34px var(--mono); color: var(--card); background: var(--ink); padding: 16px 40px; border-radius: 40px; letter-spacing: 2px; }
-
-  #fade { position: absolute; inset: 0; background: var(--bg); opacity: 0; }
-  #preload { position: absolute; left: 0; top: 0; opacity: 0; font-family: var(--sans); white-space: nowrap; }
-  #preload .s { font-family: var(--serif); font-weight: 700; }
+  /* ---------- post ---------- */
+  #glitch { position: absolute; inset: 0; pointer-events: none; }
+  #glitch i { position: absolute; left: 0; display: block; }
+  #flash { position: absolute; inset: 0; background: #fff; opacity: 0; mix-blend-mode: overlay; }
+  #scan { position: absolute; inset: 0; background: repeating-linear-gradient(0deg, rgba(0,0,0,.18) 0 1px, transparent 1px 3px); opacity: .35; }
+  #vig { position: absolute; inset: 0; background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.65) 100%); }
+  #grain { position: absolute; inset: -128px; opacity: .05; mix-blend-mode: screen; }
+  #black { position: absolute; inset: 0; background: #000; opacity: 0; }
+  #preload { position: absolute; opacity: 0; white-space: nowrap; }
 </style>
 </head>
 <body>
-<div class="blob" id="b1"></div>
-<div class="blob" id="b2"></div>
-<div class="blob" id="b3"></div>
+<canvas id="fx" width="1920" height="1080"></canvas>
 
-<!-- S1 · 开场 -->
+<!-- S1 · BOOT -->
 <section class="scene" id="s1">
-  <div class="center">
-    <svg id="logo1" viewBox="-100 -100 200 200"></svg>
-    <div id="title1"></div>
-    <div id="sub1" class="r">由 Anthropic 打造的 AI 助手</div>
-    <div id="rule1"></div>
-  </div>
+  <div id="boot"></div>
+  <div id="t1"></div>
+  <div id="s1sub"><div class="cn" id="s1cn">由 Anthropic 打造的 AI 助手</div><div class="en" id="s1en"></div></div>
 </section>
 
-<!-- S2 · 认识 Claude -->
+<!-- S2 · NEURAL CORE -->
 <section class="scene" id="s2">
-  <div class="left">
-    <div class="kicker r">01 · 认识 CLAUDE</div>
-    <div class="h2 r">一个值得信赖的<br>AI 伙伴</div>
-    <div class="lead">
-      <div><b>Claude</b> 是由 <b>Anthropic</b> 开发的 AI 助手。</div>
-      <div>Anthropic 是一家专注于 AI 安全与研究的公司，</div>
-      <div>致力于构建<b>可靠、可解释、可引导</b>的 AI 系统。</div>
+  <div class="col">
+    <div class="kicker o">[01] 认识 CLAUDE</div>
+    <h1><span class="split">会思考的</span><br><span class="grad split">AI 伙伴</span></h1>
+    <div class="body">
+      <div class="o"><b>Claude</b> 是 <b>Anthropic</b> 开发的大语言模型 AI 助手。</div>
+      <div class="o">Anthropic 专注于 AI 安全与研究，</div>
+      <div class="o">致力于构建可靠、可解释、可引导的 AI 系统。</div>
+    </div>
+    <div id="specs">
+      <div class="spec o"><span>RELIABLE</span><span class="cn">可靠</span><div class="bar"><i></i></div></div>
+      <div class="spec o"><span>INTERPRETABLE</span><span class="cn">可解释</span><div class="bar"><i></i></div></div>
+      <div class="spec o"><span>STEERABLE</span><span class="cn">可引导</span><div class="bar"><i></i></div></div>
     </div>
   </div>
-  <div class="right">
-    <div class="pill r"><div class="dot">稳</div><div><div class="t">可靠</div><div class="e">RELIABLE</div></div></div>
-    <div class="pill r"><div class="dot">明</div><div><div class="t">可解释</div><div class="e">INTERPRETABLE</div></div></div>
-    <div class="pill r"><div class="dot">控</div><div><div class="t">可引导</div><div class="e">STEERABLE</div></div></div>
-  </div>
+  <div class="callout o" id="co1" style="left:1520px; top:150px"><span>◆</span> 语言 · LANGUAGE</div>
+  <div class="callout o" id="co2" style="left:1000px; top:945px"><span>◆</span> 推理 · REASONING</div>
+  <div class="callout o" id="co3" style="left:1520px; top:945px"><span>◆</span> 视觉 · VISION</div>
 </section>
 
-<!-- S3 · 能力 -->
+<!-- S3 · CAPABILITY MATRIX -->
 <section class="scene" id="s3">
   <div class="head">
-    <div class="kicker r">02 · 它能做什么</div>
-    <div class="h2 r">从灵感到落地，全程协作</div>
+    <div><div class="kicker o">[02] 它能做什么</div><h2 class="o">能力矩阵</h2></div>
+    <div class="en o">CAPABILITY MATRIX</div>
   </div>
-  <div id="grid">
-    <div class="card r"><div class="icon"><svg viewBox="0 0 24 24"><path d="M4 20h4L19.5 8.5a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="M14.5 7.5l2 2"/></svg></div><div><div class="t">写作与创作</div><div class="d">文章、邮件、故事与文案，<br>构思润色一气呵成</div></div></div>
-    <div class="card r"><div class="icon"><svg viewBox="0 0 24 24"><path d="M8 6l-6 6 6 6M16 6l6 6-6 6M13.5 4l-3 16"/></svg></div><div><div class="t">编程与调试</div><div class="d">编写、审查、重构代码，<br>快速定位并修复 Bug</div></div></div>
-    <div class="card r"><div class="icon"><svg viewBox="0 0 24 24"><path d="M4 20V11M10 20V5M16 20v-7M21 20H3"/></svg></div><div><div class="t">分析与推理</div><div class="d">拆解复杂问题，<br>一步一步严谨推理</div></div></div>
-    <div class="card r"><div class="icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3.2 3.2 3.2 14.8 0 18M12 3c-3.2 3.2-3.2 14.8 0 18"/></svg></div><div><div class="t">多语言交流</div><div class="d">中文、英文、日文等，<br>多种语言自如切换</div></div></div>
-    <div class="card r"><div class="icon"><svg viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></div><div><div class="t">视觉理解</div><div class="d">读懂图片、图表<br>以及 PDF 文档</div></div></div>
-    <div class="card r"><div class="icon"><svg viewBox="0 0 24 24"><path d="M7 3h8l4 4v14H7z"/><path d="M15 3v4h4M10 12h6M10 16h6"/><path d="M4 6v15h11"/></svg></div><div><div class="t">长文本处理</div><div class="d">一次消化整本书<br>或大型代码库</div></div></div>
+  <div id="matrix">
+    <div class="panel o"><svg class="frame"><rect x="0" y="0" width="100%" height="100%" pathLength="1"/><path d="M0 24V0h24"/></svg>
+      <div class="top"><span class="n">01</span><span>WRITING</span></div><div class="t">写作与创作</div><div class="d">文章 · 邮件 · 故事 · 文案</div>
+      <div class="viz v-write"><i></i><i></i><i></i></div></div>
+    <div class="panel o"><svg class="frame"><rect x="0" y="0" width="100%" height="100%" pathLength="1"/><path d="M0 24V0h24"/></svg>
+      <div class="top"><span class="n">02</span><span>CODING</span></div><div class="t">编程与调试</div><div class="d">编写 · 审查 · 重构 · 修 Bug</div>
+      <div class="viz v-code" id="code3"></div></div>
+    <div class="panel o"><svg class="frame"><rect x="0" y="0" width="100%" height="100%" pathLength="1"/><path d="M0 24V0h24"/></svg>
+      <div class="top"><span class="n">03</span><span>REASONING</span></div><div class="t">分析与推理</div><div class="d">拆解复杂问题，逐步推演</div>
+      <div class="viz v-reason"><div class="node"></div><div class="link"><i></i></div><div class="node"></div><div class="link"><i></i></div><div class="node"></div><div class="link"><i></i></div><div class="node"></div><div class="link"><i></i></div><div class="node"></div></div></div>
+    <div class="panel o"><svg class="frame"><rect x="0" y="0" width="100%" height="100%" pathLength="1"/><path d="M0 24V0h24"/></svg>
+      <div class="top"><span class="n">04</span><span>MULTILINGUAL</span></div><div class="t">多语言交流</div><div class="d">跨越语言，自如切换</div>
+      <div class="viz v-lang" id="lang3"></div></div>
+    <div class="panel o"><svg class="frame"><rect x="0" y="0" width="100%" height="100%" pathLength="1"/><path d="M0 24V0h24"/></svg>
+      <div class="top"><span class="n">05</span><span>VISION</span></div><div class="t">视觉理解</div><div class="d">图片 · 图表 · PDF 文档</div>
+      <div class="viz v-vision" id="vis3"><div class="box" data-l="CHART ✓"></div></div></div>
+    <div class="panel o"><svg class="frame"><rect x="0" y="0" width="100%" height="100%" pathLength="1"/><path d="M0 24V0h24"/></svg>
+      <div class="top"><span class="n">06</span><span>LONG CONTEXT</span></div><div class="t">长文本处理</div><div class="d">一次读完整本书或代码库</div>
+      <div class="viz"><div class="v-ctx" id="ctx3"></div><div class="v-ctx-l" id="ctx3l"></div></div></div>
   </div>
 </section>
 
-<!-- S4 · 对话 -->
+<!-- S4 · INTERFACE -->
 <section class="scene" id="s4">
-  <div class="head">
-    <div class="kicker r">03 · 对话体验</div>
-    <div class="h2 r">像和朋友聊天<br>一样自然</div>
-    <div class="lead r">用日常语言提问，<br>得到清晰、有温度的回答。</div>
-  </div>
-  <div id="chat" class="r">
-    <div class="bar"><svg class="spark" viewBox="-100 -100 200 200"></svg>Claude<div class="lights"><i></i><i></i><i></i></div></div>
-    <div class="body">
-      <div class="msg-user r" id="q4">用一句话解释什么是递归？</div>
-      <div class="msg-ai r" id="a4"><svg class="spark" viewBox="-100 -100 200 200"></svg><div class="txt" id="a4txt"></div></div>
+  <div class="head"><div class="kicker o">[03] 对话体验</div><h2 class="o">提问，思考，回答</h2></div>
+  <div id="term" class="glass o">
+    <div class="bar"><div class="lights"><b></b><b></b><b></b></div>claude — session<div class="live"><i></i>LIVE</div></div>
+    <div id="chat">
+      <div class="line"><div class="who">USER ›</div><div id="q4"></div></div>
+      <div class="line ai"><div class="who">CLAUDE ›</div><div id="a4"></div></div>
+    </div>
+    <div id="trace">
+      <div class="h">THINKING TRACE</div>
+      <div class="step o"><span class="ix">01</span>理解问题<span class="ck">✓</span></div>
+      <div class="step o"><span class="ix">02</span>提炼概念：自我调用<span class="ck">✓</span></div>
+      <div class="step o"><span class="ix">03</span>构建类比：镜中镜<span class="ck">✓</span></div>
+      <div class="step o"><span class="ix">04</span>校验：终止条件<span class="ck">✓</span></div>
+      <div class="step o"><span class="ix">05</span>组织回答<span class="ck">✓</span></div>
     </div>
   </div>
+  <div id="note4" class="o">* 界面为示意</div>
 </section>
 
-<!-- S5 · 模型家族 -->
+<!-- S5 · MODEL FAMILY -->
 <section class="scene" id="s5">
-  <div class="head">
-    <div class="kicker r">04 · 模型家族</div>
-    <div class="h2 r">为不同需求，选择合适的模型</div>
-  </div>
-  <div id="models">
-    <div class="model r"><div class="n">Haiku</div><div class="d">快速、轻量、经济，<br>适合实时与大批量任务</div>
-      <div class="meter"><div class="l"><span>智能</span></div><div class="track"><div class="fill" data-v="0.58"></div></div></div>
-      <div class="meter sp"><div class="l"><span>速度</span></div><div class="track"><div class="fill" data-v="0.96"></div></div></div></div>
-    <div class="model r"><div class="n">Sonnet</div><div class="d">能力与速度的均衡之选，<br>胜任绝大多数日常工作</div>
-      <div class="meter"><div class="l"><span>智能</span></div><div class="track"><div class="fill" data-v="0.8"></div></div></div>
-      <div class="meter sp"><div class="l"><span>速度</span></div><div class="track"><div class="fill" data-v="0.76"></div></div></div></div>
-    <div class="model hl r"><div class="n">Opus</div><div class="d">最强大的智能，<br>攻克最复杂的任务</div>
-      <div class="meter"><div class="l"><span>智能</span></div><div class="track"><div class="fill" data-v="0.98"></div></div></div>
-      <div class="meter sp"><div class="l"><span>速度</span></div><div class="track"><div class="fill" data-v="0.55"></div></div></div></div>
-  </div>
-  <div id="note5" class="r">* 条形图为相对定位示意，非基准测试数据</div>
+  <div class="head"><div class="kicker o">[04] 模型家族</div><h2 class="o">一个家族，三种形态</h2></div>
+  <div class="mcard glass o" id="m1" style="top:380px"><div class="top"><i></i>TIER · 03</div><div class="n">OPUS</div><div class="d">深度推理 · 最强智能</div></div>
+  <div class="mcard glass o" id="m2" style="top:590px"><div class="top"><i></i>TIER · 02</div><div class="n">SONNET</div><div class="d">能力与速度的均衡之选</div></div>
+  <div class="mcard glass o" id="m3" style="top:800px"><div class="top"><i></i>TIER · 01</div><div class="n">HAIKU</div><div class="d">迅捷 · 轻量 · 高性价比</div></div>
 </section>
 
-<!-- S6 · 使用方式 -->
+<!-- S6 · EVERYWHERE -->
 <section class="scene" id="s6">
-  <div class="head">
-    <div class="kicker r">05 · 随时随地</div>
-    <div class="h2 r">在你工作的地方，与你协作</div>
-  </div>
-  <div id="where">
-    <div class="where r"><div class="icon"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H10l-6 4z"/><path d="M8 9.5h8M8 12.5h5"/></svg></div>
-      <div class="t">Claude 应用</div><div class="d">网页、桌面端与移动端，<br>随时随地开启对话</div><div class="foot"><span class="tag">claude.ai</span></div></div>
-    <div class="where r"><div class="icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M7 9l3 3-3 3M13 15h4"/></svg></div>
-      <div class="t">Claude Code</div><div class="d">在终端与 IDE 中<br>并肩写代码的编程伙伴</div><div class="foot"><div class="term"><span class="pr">$</span> <span id="cmd6"></span><span class="caret" id="caret6"></span></div></div></div>
-    <div class="where r"><div class="icon"><svg viewBox="0 0 24 24"><path d="M8 4C6 4 5 5 5 7v2c0 1.5-1 3-2 3 1 0 2 1.5 2 3v2c0 2 1 3 3 3M16 4c2 0 3 1 3 3v2c0 1.5 1 3 2 3-1 0-2 1.5-2 3v2c0 2-1 3-3 3"/></svg></div>
-      <div class="t">Claude API</div><div class="d">开发者平台，<br>把 Claude 集成进你的产品</div><div class="foot"><span class="tag">Developer Platform</span></div></div>
-  </div>
+  <div class="head"><div class="kicker o">[05] 随时随地</div><h2 class="o">连接你工作的每一处</h2></div>
+  <div class="ncard glass o" id="n1" style="left:160px; top:470px"><div class="top">01 · APPS</div><div class="t">Claude 应用</div><div class="d">网页 · 桌面端 · 移动端</div><div class="code"><span class="p">↗</span> claude.ai</div></div>
+  <div class="ncard glass o" id="n2" style="left:1300px; top:290px"><div class="top">02 · CLAUDE CODE</div><div class="t">Claude Code</div><div class="d">终端与 IDE 中的编程搭档</div><div class="code"><span class="p">$</span> <span id="cmd6"></span><span class="caret" id="caret6"></span></div></div>
+  <div class="ncard glass o" id="n3" style="left:1300px; top:660px"><div class="top">03 · API</div><div class="t">Claude API</div><div class="d">开发者平台 · 集成进你的产品</div><div class="code"><span class="p">POST</span> /v1/messages</div></div>
 </section>
 
-<!-- S7 · 原则 -->
+<!-- S7 · PRINCIPLES -->
 <section class="scene" id="s7">
-  <div class="head">
-    <div class="kicker r">06 · 核心原则</div>
-    <div class="h2 r">有帮助，也值得信赖</div>
-  </div>
-  <div id="vline"></div>
-  <div id="vals">
-    <div class="val r"><div class="ring"><svg viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10.2A4.2 4.2 0 0 1 12 7.3a4.2 4.2 0 0 1 7.5 2.5C19.5 15.4 12 20 12 20z"/></svg></div><div class="t">有帮助</div><div class="e">HELPFUL</div></div>
-    <div class="val r"><div class="ring"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.3l2.7 2.7L16 9.5"/></svg></div><div class="t">诚实</div><div class="e">HONEST</div></div>
-    <div class="val r"><div class="ring"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg></div><div class="t">无害</div><div class="e">HARMLESS</div></div>
-  </div>
-  <div id="cai" class="r">以<b>“宪法式 AI”（Constitutional AI）</b>等方法训练，让 AI 更安全、更可靠</div>
+  <div class="kicker o">[06] 核心原则</div>
+  <div class="prin" id="p1" style="top:250px"><div class="en" style="left:140px">HELPFUL</div><div class="cn" style="right:150px">有帮助</div><div class="ds" style="right:150px">真正解决你的问题</div></div>
+  <div class="prin" id="p2" style="top:480px"><div class="en" style="right:140px">HONEST</div><div class="cn" style="left:150px">诚实</div><div class="ds" style="left:150px">坦诚面对不确定</div></div>
+  <div class="prin" id="p3" style="top:710px"><div class="en" style="left:140px">HARMLESS</div><div class="cn" style="right:150px">无害</div><div class="ds" style="right:150px">安全是底线</div></div>
+  <div id="cai" class="o">以 <b>「宪法式 AI」</b> 等方法训练 · CONSTITUTIONAL AI</div>
 </section>
 
-<!-- S8 · 结尾 -->
+<!-- S8 · OUTRO -->
 <section class="scene" id="s8">
-  <div class="center">
-    <svg id="logo8" viewBox="-100 -100 200 200"></svg>
-    <div id="hello"></div>
-    <div id="help" class="r">有什么可以帮你的？</div>
-    <div id="url" class="r">claude.ai</div>
-  </div>
+  <svg id="spark" viewBox="-100 -100 200 200"></svg>
+  <div id="t8"></div>
+  <div id="s8sub"></div>
+  <div id="url" class="o"><span>claude.ai</span></div>
 </section>
 
-<div id="chrome">
-  <div id="brand"><svg class="spark" viewBox="-100 -100 200 200"></svg>Claude</div>
-  <div id="pager">01 / 06</div>
-  <div id="progress"><i></i></div>
+<div id="hud">
+  <div class="corner c1"></div><div class="corner c2"></div><div class="corner c3"></div><div class="corner c4"></div>
+  <div id="hud-tl"><span class="dot"></span>CLAUDE // SYSTEM INTRO</div>
+  <div id="hud-tr">T+00:00:00</div>
+  <div id="hud-bl">SEQ 00 · BOOT</div>
+  <div id="hud-br">BUILT BY ANTHROPIC</div>
+  <div id="track"><i></i></div>
 </div>
 
-<div id="fade"></div>
+<div id="glitch"></div>
+<div id="flash"></div>
+<canvas id="grain" width="512" height="512"></canvas>
+<div id="scan"></div>
+<div id="vig"></div>
+<div id="black"></div>
 <div id="preload"></div>
 
 <script>
-const DURATION = 64;
-const TITLE = "Claude";
-const ANSWER = "递归，就是函数在解决问题时调用它自己——就像两面相对的镜子，一层映着一层，直到遇到终止条件才停下来。";
-const HELLO = "你好，我是 Claude。";
-const CMD = "claude \"帮我修复这个 bug\"";
-
+/* =================== constants & content =================== */
+const DURATION = 64, FPS = 30;
+const CUTS = [8, 16, 26, 35, 43, 50, 56];
 const SCENES = [
-  { id: "s1", a: 0,  b: 7 },
-  { id: "s2", a: 7,  b: 15 },
-  { id: "s3", a: 15, b: 25 },
-  { id: "s4", a: 25, b: 35 },
-  { id: "s5", a: 35, b: 43 },
-  { id: "s6", a: 43, b: 51 },
-  { id: "s7", a: 51, b: 58 },
-  { id: "s8", a: 58, b: DURATION + 1 },
+  { id: "s1", a: 0,  b: 8,  code: "SEQ 00 · BOOT" },
+  { id: "s2", a: 8,  b: 16, code: "SEQ 01 · NEURAL CORE" },
+  { id: "s3", a: 16, b: 26, code: "SEQ 02 · CAPABILITIES" },
+  { id: "s4", a: 26, b: 35, code: "SEQ 03 · INTERFACE" },
+  { id: "s5", a: 35, b: 43, code: "SEQ 04 · MODEL FAMILY" },
+  { id: "s6", a: 43, b: 50, code: "SEQ 05 · EVERYWHERE" },
+  { id: "s7", a: 50, b: 56, code: "SEQ 06 · PRINCIPLES" },
+  { id: "s8", a: 56, b: 65, code: "SEQ 07 · HELLO" },
 ];
+const BOOT = [
+  ["> boot sequence initiated", ""],
+  ["> loading neural weights ........ ", "OK"],
+  ["> calibrating reasoning engine .. ", "OK"],
+  ["> alignment check ............... ", "PASS"],
+  ["> hello, world_", ""],
+];
+const Q = "用一句话解释什么是递归？";
+const A = "递归，就是函数在解题时调用它自己——像两面相对的镜子层层映照，直到遇到终止条件才停下。";
+const CODE = [["k", "def "], ["f", "think"], ["", "(q):\n    "], ["k", "return "], ["f", "reason"], ["", "(q)  "], ["c", "# ✓"]];
+const LANGS = ["你好", "Hello", "こんにちは", "Bonjour", "Hola", "Ciao"];
+const CMD = "claude";
+const OUTRO = "你好，我是 Claude。有什么可以帮你的？";
+const GLYPHS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#$%&*+=<>/\\[]{}";
 
+/* =================== utils =================== */
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 const clamp = x => Math.max(0, Math.min(1, x));
 const prog = (t, a, d) => clamp((t - a) / d);
 const out3 = x => 1 - Math.pow(1 - x, 3);
+const out5 = x => 1 - Math.pow(1 - x, 5);
 const inout = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
-const back = x => { const c1 = 1.4, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+const lerp = (a, b, k) => a + (b - a) * k;
+function hash(a, b = 0) { let h = Math.imul((a | 0) ^ 0x9e3779b9, 374761393) + Math.imul(b | 0, 668265263); h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
+function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 
-function reveal(el, t, a, { d = .8, y = 40, x = 0, s = 1, ease = out3 } = {}) {
-  const k = ease(prog(t, a, d));
-  el.style.opacity = clamp(k);
-  el.style.transform = `translate(${x * (1 - k)}px, ${y * (1 - k)}px) scale(${s + (1 - s) * k})`;
+function show(el, t, a, { d = .7, y = 30, x = 0, blur = 0, s = 1 } = {}) {
+  const k = out3(prog(t, a, d));
+  el.style.opacity = k;
+  el.style.transform = `translate(${x * (1 - k)}px, ${y * (1 - k)}px) scale(${lerp(s, 1, k)})`;
+  el.style.filter = blur ? `blur(${blur * (1 - k)}px)` : "";
+  return k;
+}
+/* split text into per-char spans once */
+function splitChars(el) {
+  const s = el.textContent; el.textContent = "";
+  el._c = Array.from(s).map(c => { const sp = document.createElement("span"); sp.className = "ch"; sp.textContent = c; el.appendChild(sp); return sp; });
+}
+function charsIn(el, t, a, st = .04, opt = {}) { el._c.forEach((c, i) => show(c, t, a + i * st, { d: .6, y: 40, blur: 12, ...opt })); }
+/* scramble-decode text */
+function buildScramble(el, str) {
+  el.textContent = "";
+  el._s = Array.from(str).map(ch => { const sp = document.createElement("span"); sp.className = "sc"; sp.innerHTML = `<i>${ch}</i><b></b>`; el.appendChild(sp); return { sp, b: sp.lastChild, ch }; });
+}
+function scramble(el, t, a, st = .06, d = .5) {
+  el._s.forEach((o, i) => {
+    const s0 = a + i * st, s1 = s0 + d;
+    if (t < s0) { o.b.textContent = ""; o.sp.classList.remove("done"); }
+    else if (t < s1 && o.ch !== " ") { o.b.textContent = GLYPHS[Math.floor(hash(Math.floor(t * 24), i * 7 + 3) * GLYPHS.length)]; o.sp.classList.remove("done"); }
+    else { o.b.textContent = o.ch; o.sp.classList.add("done"); }
+  });
+}
+function typed(str, t, a, cps) { const c = Array.from(str); return c.slice(0, Math.max(0, Math.min(c.length, Math.floor((t - a) * cps)))).join(""); }
+const caretOn = t => Math.floor(t * 2.2) % 2 === 0;
+
+/* =================== canvas FX =================== */
+const cv = $("#fx"), g = cv.getContext("2d");
+const W = 1920, H = 1080;
+const rnd = mulberry(7);
+function sprite(r, col) {
+  const c = document.createElement("canvas"); c.width = c.height = r * 2; const x = c.getContext("2d");
+  const gr = x.createRadialGradient(r, r, 0, r, r, r);
+  gr.addColorStop(0, col(1)); gr.addColorStop(.25, col(.6)); gr.addColorStop(1, col(0));
+  x.fillStyle = gr; x.fillRect(0, 0, r * 2, r * 2); return c;
+}
+const DOT = sprite(32, a => `rgba(255,150,100,${a})`);
+const WDOT = sprite(32, a => `rgba(255,240,230,${a})`);
+
+const STARS = Array.from({ length: 650 }, () => ({ x: rnd() * 2 - 1, y: rnd() * 2 - 1, z: rnd(), b: rnd() }));
+const NP = 560, PTS = [];
+for (let i = 0; i < NP; i++) {
+  const y = 1 - (i / (NP - 1)) * 2, r = Math.sqrt(1 - y * y), th = i * Math.PI * (3 - Math.sqrt(5));
+  const u = rnd() * Math.PI * 2, v = Math.acos(2 * rnd() - 1), R = 1.8 + rnd() * 2.6;
+  PTS.push({ x: Math.cos(th) * r, y, z: Math.sin(th) * r, sx: Math.sin(v) * Math.cos(u) * R * 1.8, sy: Math.cos(v) * R, sz: Math.sin(v) * Math.sin(u) * R, ph: rnd() * 6.28 });
+}
+const PAIRS = [];
+for (let i = 0; i < NP; i++) {
+  const d = [];
+  for (let j = 0; j < NP; j++) if (j !== i) { const p = PTS[i], q = PTS[j]; d.push([(p.x - q.x) ** 2 + (p.y - q.y) ** 2 + (p.z - q.z) ** 2, j]); }
+  d.sort((a, b) => a[0] - b[0]);
+  for (let k = 0; k < 3; k++) if (d[k][1] > i) PAIRS.push([i, d[k][1]]);
 }
 
-function typeInto(el, str, t, a, cps, caret = true) {
-  const chars = Array.from(str);
-  const n = Math.max(0, Math.min(chars.length, Math.floor((t - a) * cps)));
-  const blink = (n >= chars.length) ? (Math.floor(t * 2) % 2 === 0) : true;
-  el.innerHTML = "";
-  el.appendChild(document.createTextNode(chars.slice(0, n).join("")));
-  if (caret && t >= a - .4) {
-    const c = document.createElement("span");
-    c.className = "caret";
-    c.style.opacity = blink ? 1 : 0;
-    el.appendChild(c);
+/* keyframes: [time, value]; values are objects interpolated with inout easing */
+function kf(list, t) {
+  if (t <= list[0][0]) return list[0][1];
+  for (let i = 0; i < list.length - 1; i++) {
+    const [t0, v0] = list[i], [t1, v1] = list[i + 1];
+    if (t <= t1) { const k = inout((t - t0) / (t1 - t0)); const o = {}; for (const key in v0) o[key] = lerp(v0[key], v1[key], k); return o; }
   }
-  return n / chars.length;
+  return list[list.length - 1][1];
 }
+const SPH = [
+  [0,    { x: 960, y: 540, r: 330, a: 0, sc: 1 }],
+  [2.6,  { x: 960, y: 540, r: 330, a: .9, sc: 1 }],
+  [4.6,  { x: 960, y: 540, r: 330, a: .55, sc: 0 }],
+  [7.6,  { x: 960, y: 540, r: 330, a: .5, sc: 0 }],
+  [9.0,  { x: 1400, y: 560, r: 330, a: 1, sc: 0 }],
+  [15.4, { x: 1400, y: 560, r: 350, a: 1, sc: 0 }],
+  [16.6, { x: 960, y: 560, r: 760, a: .16, sc: .15 }],
+  [34.4, { x: 960, y: 560, r: 760, a: .16, sc: .15 }],
+  [35.8, { x: 1200, y: 610, r: 125, a: 1, sc: 0 }],
+  [42.4, { x: 1200, y: 610, r: 125, a: 1, sc: 0 }],
+  [43.6, { x: 960, y: 640, r: 115, a: 1, sc: 0 }],
+  [49.4, { x: 960, y: 640, r: 115, a: 1, sc: 0 }],
+  [50.6, { x: 960, y: 540, r: 900, a: .12, sc: .3 }],
+  [55.4, { x: 960, y: 540, r: 900, a: .12, sc: .3 }],
+  [56.8, { x: 960, y: 330, r: 210, a: 1, sc: 0 }],
+  [58.4, { x: 960, y: 330, r: 230, a: 1, sc: 0 }],
+  [59.1, { x: 960, y: 330, r: 6, a: 1, sc: 0 }],
+  [59.2, { x: 960, y: 330, r: 6, a: 0, sc: 0 }],
+];
+const ENV = [ // grid alpha, star speed, star alpha
+  [0,    { grid: 0, spd: .02, st: 0 }],
+  [1.0,  { grid: 0, spd: .02, st: .6 }],
+  [2.4,  { grid: 0, spd: .02, st: .7 }],
+  [3.2,  { grid: .5, spd: .9, st: 1 }],
+  [4.4,  { grid: .5, spd: .05, st: .7 }],
+  [8,    { grid: .3, spd: .04, st: .6 }],
+  [16,   { grid: 0, spd: .03, st: .5 }],
+  [35,   { grid: .35, spd: .03, st: .5 }],
+  [50,   { grid: 0, spd: .12, st: .6 }],
+  [56,   { grid: .45, spd: .04, st: .6 }],
+  [59.1, { grid: .45, spd: 1.1, st: 1 }],
+  [60.2, { grid: .45, spd: .04, st: .6 }],
+];
 
-/* Spark mark: our own radial-ray emblem */
-const RAYS = 12;
-function buildSpark(svg) {
-  const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-  for (let i = 0; i < RAYS; i++) {
-    const l = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    l.setAttribute("stroke", "#D97757");
-    l.setAttribute("stroke-linecap", "round");
-    l.setAttribute("stroke-width", i % 2 ? 13 : 17);
-    g.appendChild(l);
+// integrated star-travel distance so warp speed changes stay continuous
+const WARP_CACHE = new Map();
+function warpDistM(t) { const k = Math.round(t * 20); if (!WARP_CACHE.has(k)) WARP_CACHE.set(k, (k > 0 ? warpDistM((k - 1) / 20) : 0) + kf(ENV, k / 20).spd * .05); return WARP_CACHE.get(k); }
+
+function drawGrid(t, a) {
+  if (a <= 0) return;
+  const hy = 700, vx = W / 2;
+  g.lineWidth = 1;
+  for (let i = -16; i <= 16; i++) {
+    const x = vx + i * 150;
+    const gr = g.createLinearGradient(0, hy, 0, H);
+    gr.addColorStop(0, `rgba(255,122,69,0)`); gr.addColorStop(1, `rgba(255,122,69,${a * .5})`);
+    g.strokeStyle = gr; g.beginPath(); g.moveTo(vx + i * 8, hy); g.lineTo(x * 1 + (x - vx) * 2, H + 200); g.stroke();
   }
-  svg.appendChild(g);
-  svg._g = g;
-  drawSpark(svg, 1, 0);
-}
-function drawSpark(svg, grow, rot, pulse = 0) {
-  const lines = svg._g.children;
-  for (let i = 0; i < RAYS; i++) {
-    const ang = (i / RAYS) * Math.PI * 2 - Math.PI / 2;
-    const base = (i % 2 ? 62 : 84) + ((i * 37) % 7) - 3;
-    const k = out3(clamp(grow * 1.6 - i * 0.05));
-    const len = 12 + (base - 12) * k * (1 + pulse * Math.sin(i * 1.7 + rot * 4) * .06);
-    const r0 = 0;
-    const l = lines[i];
-    l.setAttribute("x1", Math.cos(ang) * r0);
-    l.setAttribute("y1", Math.sin(ang) * r0);
-    l.setAttribute("x2", Math.cos(ang) * len);
-    l.setAttribute("y2", Math.sin(ang) * len);
-    l.style.opacity = k > 0 ? 1 : 0;
+  const off = (t * .35) % 1;
+  for (let k = 0; k < 14; k++) {
+    const z = k + 1 - off; const y = hy + 380 / z;
+    if (y > H) continue;
+    g.strokeStyle = `rgba(255,122,69,${a * .45 * clamp((y - hy) / 260)})`;
+    g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke();
   }
-  svg._g.setAttribute("transform", `rotate(${rot})`);
 }
 
-/* setup */
-$$("svg.spark").forEach(buildSpark);
-buildSpark($("#logo1"));
-buildSpark($("#logo8"));
-Array.from(TITLE).forEach(ch => { const s = document.createElement("span"); s.textContent = ch; $("#title1").appendChild(s); });
-$("#preload").innerHTML = `<span>${ANSWER}${HELLO}${CMD}</span><span class="s">${HELLO}${TITLE}</span>`;
+function drawSphere(t, s) {
+  if (s.a <= 0.001) return [];
+  const ry = t * .22, rx = -.35 + Math.sin(t * .15) * .1;
+  const cy = Math.cos(ry), sy = Math.sin(ry), cx = Math.cos(rx), sx = Math.sin(rx);
+  const P = new Array(NP);
+  for (let i = 0; i < NP; i++) {
+    const p = PTS[i];
+    const br = 1 + Math.sin(t * 1.4 + p.ph) * .015;
+    let x = lerp(p.x * br, p.sx, s.sc), y = lerp(p.y * br, p.sy, s.sc), z = lerp(p.z * br, p.sz, s.sc);
+    let x1 = x * cy + z * sy, z1 = -x * sy + z * cy;
+    let y1 = y * cx - z1 * sx, z2 = y * sx + z1 * cx;
+    const f = 3 / (3 + z2);
+    P[i] = { x: s.x + x1 * s.r * f, y: s.y + y1 * s.r * f, z: z2, d: clamp((1 - z2) / 2) };
+  }
+  const la = s.a * (1 - s.sc) * .5;
+  if (la > .01) {
+    g.lineWidth = 1;
+    const tick = Math.floor(t * 5);
+    for (let k = 0; k < PAIRS.length; k++) {
+      const [i, j] = PAIRS[k]; const p = P[i], q = P[j];
+      const hot = hash(tick, k) > .985;
+      const a = la * (.15 + .85 * (p.d + q.d) / 2) * (hot ? 3 : 1);
+      g.strokeStyle = hot ? `rgba(255,200,170,${Math.min(1, a)})` : `rgba(255,122,69,${a * .55})`;
+      g.beginPath(); g.moveTo(p.x, p.y); g.lineTo(q.x, q.y); g.stroke();
+    }
+  }
+  g.globalCompositeOperation = "lighter";
+  for (let i = 0; i < NP; i++) {
+    const p = P[i]; const sz = (4 + 10 * p.d) * (s.r > 200 ? 1 : .7);
+    g.globalAlpha = s.a * (.2 + .8 * p.d);
+    g.drawImage(p.d > .8 && hash(i, 3) > .8 ? WDOT : DOT, p.x - sz, p.y - sz, sz * 2, sz * 2);
+  }
+  g.globalAlpha = 1; g.globalCompositeOperation = "source-over";
+  // core glow
+  const gr = g.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r * 1.6);
+  gr.addColorStop(0, `rgba(255,122,69,${.22 * s.a * (1 - s.sc)})`); gr.addColorStop(1, "rgba(255,122,69,0)");
+  g.fillStyle = gr; g.fillRect(s.x - s.r * 2, s.y - s.r * 2, s.r * 4, s.r * 4);
+  return P;
+}
 
-const S = Object.fromEntries(SCENES.map(s => [s.id, $("#" + s.id)]));
+/* S5 orbits */
+const ORBITS = [{ rx: 470, sp: .35, card: "#m1" }, { rx: 355, sp: .6, card: "#m2" }, { rx: 245, sp: .95, card: "#m3" }];
+const ORB_TARGET = [200, 180, 160];
+function drawOrbits(lt, a, s) {
+  if (a <= 0) return;
+  ORBITS.forEach((o, i) => {
+    const ry = o.rx * .3, k = inout(prog(lt, .6 + i * .2, 1.2));
+    g.strokeStyle = `rgba(242,238,232,${.28 * a})`; g.lineWidth = 1.2; g.setLineDash([6, 8]);
+    g.beginPath(); g.ellipse(s.x, s.y, o.rx, ry, 0, Math.PI, Math.PI + Math.PI * 2 * k); g.stroke(); g.setLineDash([]);
+    // traveling node
+    const ang = lt * o.sp + i * 2.1;
+    const nx = s.x + Math.cos(ang) * o.rx, ny = s.y + Math.sin(ang) * ry;
+    const front = Math.sin(ang) > 0 ? 1 : .45;
+    g.globalCompositeOperation = "lighter"; g.globalAlpha = a * k * front;
+    g.drawImage(DOT, nx - 22, ny - 22, 44, 44); g.drawImage(WDOT, nx - 8, ny - 8, 16, 16);
+    g.globalAlpha = 1; g.globalCompositeOperation = "source-over";
+    // leader line to card
+    const ta = ORB_TARGET[i] * Math.PI / 180, tx = s.x + Math.cos(ta) * o.rx, ty = s.y + Math.sin(ta) * ry;
+    const card = $(o.card), cy = card.offsetTop + card.offsetHeight / 2, cx0 = card.offsetLeft + card.offsetWidth;
+    const lk = out3(prog(lt, 1.4 + i * .25, .8));
+    if (lk > 0) {
+      g.strokeStyle = `rgba(255,122,69,${.8 * a})`; g.lineWidth = 1.5;
+      g.beginPath(); g.moveTo(cx0, cy); g.lineTo(lerp(cx0, tx, lk), lerp(cy, ty, lk)); g.stroke();
+      g.fillStyle = `rgba(255,122,69,${a * lk})`; g.beginPath(); g.arc(tx, ty, 5, 0, 7); g.fill();
+    }
+  });
+}
 
+/* S6 network */
+function drawNetwork(lt, a, s) {
+  if (a <= 0) return;
+  ["#n1", "#n2", "#n3"].forEach((id, i) => {
+    const el = $(id); const k = out3(prog(lt, .9 + i * .3, .9));
+    if (k <= 0) return;
+    const ex = i === 0 ? el.offsetLeft + el.offsetWidth : el.offsetLeft, ey = el.offsetTop + el.offsetHeight / 2;
+    const bx = i === 0 ? ex + 80 : ex - 80;
+    // polyline: core -> elbow -> card
+    const path = [[s.x, s.y], [bx, s.y], [bx, ey], [ex, ey]];
+    const lens = []; let L = 0; for (let j = 1; j < path.length; j++) { const d = Math.hypot(path[j][0] - path[j - 1][0], path[j][1] - path[j - 1][1]); lens.push(d); L += d; }
+    const at = u => { let d = u * L; for (let j = 0; j < lens.length; j++) { if (d <= lens[j]) { const q = d / lens[j]; return [lerp(path[j][0], path[j + 1][0], q), lerp(path[j][1], path[j + 1][1], q)]; } d -= lens[j]; } return path[path.length - 1]; };
+    g.strokeStyle = `rgba(255,122,69,${.55 * a})`; g.lineWidth = 1.5;
+    g.beginPath(); g.moveTo(path[0][0], path[0][1]);
+    const steps = 60; for (let j = 1; j <= steps * k; j++) { const p = at(j / steps); g.lineTo(p[0], p[1]); } g.stroke();
+    if (k >= 1) {
+      g.globalCompositeOperation = "lighter";
+      for (let m = 0; m < 3; m++) {
+        const u = ((lt * .55 + m / 3 + i * .17) % 1); const dir = i === 0 ? 1 - u : u;
+        const p = at(dir); g.globalAlpha = a; g.drawImage(DOT, p[0] - 16, p[1] - 16, 32, 32); g.drawImage(WDOT, p[0] - 6, p[1] - 6, 12, 12);
+      }
+      g.globalAlpha = 1; g.globalCompositeOperation = "source-over";
+    }
+  });
+}
+
+/* =================== setup =================== */
+buildScramble($("#t1"), "CLAUDE");
+buildScramble($("#s1en"), "AN AI ASSISTANT BY ANTHROPIC");
+buildScramble($("#t8"), "CLAUDE");
+splitChars($("#s1cn"));
+$$("#s2 .split").forEach(splitChars);
+$$("#s7 .cn").forEach(splitChars);
+$("#s8sub").textContent = OUTRO; splitChars($("#s8sub"));
+$("#vis3").insertAdjacentHTML("afterbegin", "<i></i>".repeat(30));
+$("#ctx3").innerHTML = "<i></i>".repeat(40);
+{ // track ticks
+  const tr = $("#track"); CUTS.forEach(c => { const s = document.createElement("s"); s.style.left = (100 * c / DURATION) + "%"; tr.appendChild(s); });
+}
+{ // spark rays
+  const NS = "http://www.w3.org/2000/svg", sv = $("#spark");
+  for (let i = 0; i < 12; i++) { const l = document.createElementNS(NS, "line"); l.setAttribute("stroke", "#FF7A45"); l.setAttribute("stroke-linecap", "round"); l.setAttribute("stroke-width", i % 2 ? 11 : 15); sv.appendChild(l); }
+}
+{ // glitch slices
+  const gl = $("#glitch"); for (let i = 0; i < 14; i++) gl.appendChild(document.createElement("i"));
+}
+{ // grain texture
+  const gc = $("#grain").getContext("2d"), im = gc.createImageData(512, 512), r = mulberry(99);
+  for (let i = 0; i < im.data.length; i += 4) { const v = r() * 255; im.data[i] = im.data[i + 1] = im.data[i + 2] = v; im.data[i + 3] = 255; }
+  gc.putImageData(im, 0, 0); $("#grain").style.width = "2176px"; $("#grain").style.height = "1336px";
+}
+$("#preload").textContent = GLYPHS + A + Q + OUTRO + LANGS.join("") + BOOT.flat().join("") + "✓◆↗›—";
+
+/* =================== scenes =================== */
 const update = {
   s1(t) {
-    drawSpark($("#logo1"), prog(t, .3, 1.4), -30 + t * 6, prog(t, 1.7, 1));
-    $$("#title1 span").forEach((el, i) => reveal(el, t, 1.5 + i * .09, { d: .7, y: 60 }));
-    reveal($("#sub1"), t, 2.6, { d: .9, y: 30 });
-    $("#rule1").style.width = 240 * inout(prog(t, 3.1, 1)) + "px";
+    // boot terminal
+    let html = "", tt = .3;
+    BOOT.forEach(([l, ok], i) => {
+      const s = tt; tt += l.length / 55 + .12;
+      if (t < s) return;
+      const n = Math.floor((t - s) * 55);
+      html += l.slice(0, n) + (n >= l.length && ok ? `<span class="ok">${ok}</span>` : "") + "\n";
+    });
+    const bootK = 1 - prog(t, 3.0, .35);
+    $("#boot").innerHTML = html; $("#boot").style.opacity = bootK;
+    $("#boot").style.transform = `translateX(${(1 - bootK) * -40}px)`;
+    scramble($("#t1"), t, 3.4, .09, .55);
+    charsIn($("#s1cn"), t, 4.6, .05);
+    scramble($("#s1en"), t, 5.0, .025, .4);
   },
   s2(t) {
-    const r = $$("#s2 .r");
-    reveal(r[0], t, .4); reveal(r[1], t, .6, { y: 50 });
-    $$("#s2 .lead div").forEach((el, i) => reveal(el, t, 1.4 + i * .5, { y: 24 }));
-    $$("#s2 .pill").forEach((el, i) => reveal(el, t, 2.4 + i * .45, { x: 80, y: 0, s: .96 }));
+    show($("#s2 .kicker"), t, .3, { x: -30, y: 0 });
+    const sp = $$("#s2 .split");
+    charsIn(sp[0], t, .5, .06); charsIn(sp[1], t, .85, .06);
+    $$("#s2 .body div").forEach((el, i) => show(el, t, 1.6 + i * .25, { y: 16, blur: 8 }));
+    $$("#s2 .spec").forEach((el, i) => { show(el, t, 2.6 + i * .25, { x: -20, y: 0 }); $("i", el).style.width = 100 * out5(prog(t, 2.9 + i * .25, 1.2)) + "%"; });
+    ["#co1", "#co2", "#co3"].forEach((id, i) => show($(id), t, 2.0 + i * .3, { x: 20, y: 0 }));
   },
   s3(t) {
-    reveal($("#s3 .kicker"), t, .4); reveal($("#s3 .h2"), t, .6, { y: 50 });
-    $$("#grid .card").forEach((el, i) => reveal(el, t, 1.3 + i * .32, { d: .8, y: 50, s: .92, ease: back }));
+    show($("#s3 .kicker"), t, .2, { x: -30, y: 0 }); show($("#s3 h2"), t, .35, { blur: 10 }); show($("#s3 .en"), t, .6, { y: 0, x: 20 });
+    $$("#matrix .panel").forEach((el, i) => {
+      const a = .8 + i * .22; show(el, t, a, { y: 30, s: .97 });
+      const r = $("rect", el); const k = out3(prog(t, a, 1)); r.style.strokeDasharray = "1"; r.style.strokeDashoffset = 1 - k;
+    });
+    const lt = i => t - (1.3 + i * .22);
+    // 01 writing
+    $$("#matrix .v-write i").forEach((b, j) => b.style.width = [92, 76, 54][j] * out3(prog(lt(0), j * .35, .9)) + "%");
+    // 02 code
+    { const n = Math.max(0, Math.floor(lt(1) * 16)); let used = 0, h = "";
+      for (const [c, s] of CODE) { const take = Array.from(s).slice(0, Math.max(0, n - used)).join(""); used += Array.from(s).length; if (take) h += `<span class="${c}">${take}</span>`; }
+      $("#code3").innerHTML = h + `<span class="caret" style="height:22px;width:10px;vertical-align:-3px;opacity:${caretOn(t) ? 1 : 0}"></span>`; }
+    // 03 reasoning
+    { const k = lt(2); const nodes = $$("#matrix .v-reason .node"), links = $$("#matrix .v-reason .link i");
+      const pos = k < 0 ? -1 : (k * 1.6) % 6.5;
+      nodes.forEach((nd, j) => nd.classList.toggle("on", pos >= j * 1.2));
+      links.forEach((ln, j) => ln.style.width = 100 * clamp((pos - j * 1.2) / 1.2) + "%"); }
+    // 04 languages
+    { const k = Math.max(0, lt(3)); const idx = Math.floor(k / .75) % LANGS.length, f = (k / .75) % 1;
+      const el = $("#lang3"); el.textContent = LANGS[idx];
+      const y = f < .15 ? (1 - out3(f / .15)) * 40 : f > .85 ? -out3((f - .85) / .15) * 40 : 0;
+      el.style.transform = `translateY(${y}px)`; el.style.opacity = 1 - Math.abs(y) / 40; }
+    // 05 vision
+    { const k = Math.max(0, lt(4)); const box = $("#vis3 .box");
+      const tg = [[.05, .1, .25, .8], [.5, .05, .3, .9], [.62, .1, .3, .8]]; const ph = Math.min(2, Math.floor(k / .9)), q = out3(clamp((k % .9) / .5));
+      const A0 = tg[Math.max(0, ph - 1)], B0 = tg[ph]; const c = ph === 0 ? B0 : A0.map((v, j) => lerp(v, B0[j], q));
+      Object.assign(box.style, { left: c[0] * 100 + "%", top: c[1] * 100 + "%", width: c[2] * 100 + "%", height: c[3] * 100 + "%" });
+      box.setAttribute("data-l", ph < 2 || q < 1 ? "SCANNING" : "CHART ✓"); }
+    // 06 context
+    { const k = Math.max(0, lt(5)); const n = Math.floor(clamp(k / 2.2) * 40);
+      $$("#ctx3 i").forEach((b, j) => b.classList.toggle("on", j < n));
+      $("#ctx3l").textContent = n < 40 ? `READING ${"▮".repeat(1 + Math.floor(k * 4) % 3)}` : "整本书 · 整个代码库 ✓"; }
   },
   s4(t) {
-    reveal($("#s4 .kicker"), t, .3); reveal($("#s4 .h2"), t, .5, { y: 50 }); reveal($("#s4 .lead"), t, .9, { y: 24 });
-    reveal($("#chat"), t, .5, { d: 1, y: 60, s: .96 });
-    reveal($("#q4"), t, 1.4, { y: 24, x: 30, s: .9, ease: back });
-    reveal($("#a4"), t, 2.2, { y: 20 });
-    const txt = $("#a4txt");
-    const aiSpark = $("#a4 svg");
-    if (t < 3.3) {
-      txt.innerHTML = '<div class="dots"><i></i><i></i><i></i></div>';
-      $$(".dots i", txt).forEach((d, i) => { d.style.opacity = .3 + .7 * Math.max(0, Math.sin(t * 7 - i * .9)); });
-      drawSpark(aiSpark, 1, t * 120, 1);
+    show($("#s4 .kicker"), t, .2, { x: -30, y: 0 }); show($("#s4 h2"), t, .35, { blur: 10 });
+    show($("#term"), t, .5, { y: 40, s: .98 });
+    const q = typed(Q, t, 1.2, 14);
+    $("#q4").innerHTML = q + (t < 2.4 ? `<span class="caret" style="opacity:${caretOn(t) ? 1 : 0}"></span>` : "");
+    const steps = $$("#trace .step"); steps.forEach((s, i) => show(s, t, 2.5 + i * .3, { x: 20, y: 0 }));
+    const a0 = 4.0;
+    if (t < a0) {
+      $("#a4").innerHTML = t < 2.4 ? "" : `<span class="think">THINKING ${[0, 1, 2, 3].map(i => `<i style="opacity:${.25 + .75 * Math.max(0, Math.sin(t * 9 - i * .8))}"></i>`).join("")}</span>`;
     } else {
-      typeInto(txt, ANSWER, t, 3.3, 11);
-      drawSpark(aiSpark, 1, 3.3 * 120 + (t - 3.3) * 8, 0);
+      const s = typed(A, t, a0, 13); const c = Array.from(s); const cut = Math.max(0, c.length - 4);
+      $("#a4").innerHTML = c.slice(0, cut).join("") + `<span class="fresh">${c.slice(cut).join("")}</span><span class="caret" style="opacity:${c.length < Array.from(A).length || caretOn(t) ? 1 : 0}"></span>`;
     }
+    show($("#note4"), t, 2, { y: 0 });
   },
   s5(t) {
-    reveal($("#s5 .kicker"), t, .3); reveal($("#s5 .h2"), t, .5, { y: 50 });
-    $$("#models .model").forEach((el, i) => {
-      reveal(el, t, 1.2 + i * .35, { y: 60, s: .95 });
-      $$(".fill", el).forEach((f, j) => { f.style.width = (100 * +f.dataset.v * inout(prog(t, 2 + i * .35 + j * .2, 1.4))) + "%"; });
-    });
-    reveal($("#note5"), t, 3.6, { y: 0 });
+    show($("#s5 .kicker"), t, .2, { x: -30, y: 0 }); show($("#s5 h2"), t, .35, { blur: 10 });
+    ["#m1", "#m2", "#m3"].forEach((id, i) => show($(id), t, 1.0 + i * .25, { x: -40, y: 0 }));
   },
   s6(t) {
-    reveal($("#s6 .kicker"), t, .3); reveal($("#s6 .h2"), t, .5, { y: 50 });
-    $$("#where .where").forEach((el, i) => reveal(el, t, 1.2 + i * .35, { y: 60, s: .95 }));
-    const n = Array.from(CMD);
-    const k = Math.max(0, Math.min(n.length, Math.floor((t - 2.8) * 12)));
-    $("#cmd6").textContent = n.slice(0, k).join("");
-    $("#caret6").style.opacity = (k < n.length || Math.floor(t * 2) % 2 === 0) ? 1 : 0;
+    show($("#s6 .kicker"), t, .2, { x: -30, y: 0 }); show($("#s6 h2"), t, .35, { blur: 10 });
+    ["#n1", "#n2", "#n3"].forEach((id, i) => show($(id), t, 1.5 + i * .3, { y: 20, s: .96 }));
+    $("#cmd6").textContent = typed(CMD, t, 2.6, 10);
+    $("#caret6").style.opacity = caretOn(t) ? 1 : 0;
   },
   s7(t) {
-    reveal($("#s7 .kicker"), t, .3); reveal($("#s7 .h2"), t, .5, { y: 50 });
-    $$("#vals .val").forEach((el, i) => reveal(el, t, 1.3 + i * .55, { y: 50, s: .85, ease: back }));
-    $("#vline").style.width = 1060 * inout(prog(t, 1.5, 1.6)) + "px";
-    reveal($("#cai"), t, 3.4, { y: 24 });
+    show($("#s7 .kicker"), t, .2, { x: -30, y: 0 });
+    ["#p1", "#p2", "#p3"].forEach((id, i) => {
+      const el = $(id), a = .4 + i * .45;
+      const en = $(".en", el), dir = i % 2 ? 1 : -1;
+      const k = out5(prog(t, a, 1.1));
+      en.style.opacity = k; en.style.transform = `translateX(${dir * 260 * (1 - k) + dir * -t * 12}px)`;
+      charsIn($(".cn", el), t, a + .4, .08);
+      show($(".ds", el), t, a + .8, { y: 12 });
+    });
+    show($("#cai"), t, 2.4, { y: 16 });
   },
   s8(t) {
-    drawSpark($("#logo8"), prog(t, .2, 1.2), t * 10, prog(t, 1.2, 1) * .6);
-    typeInto($("#hello"), HELLO, t, 1.3, 9, true);
-    reveal($("#help"), t, 3, { y: 24 });
-    reveal($("#url"), t, 3.7, { y: 20, s: .9, ease: back });
+    // spark appears when sphere collapses (t = 3.1)
+    const k = prog(t, 3.1, 1.1);
+    const rays = $("#spark").children;
+    for (let i = 0; i < 12; i++) {
+      const ang = i / 12 * Math.PI * 2 - Math.PI / 2 + t * .12;
+      const base = (i % 2 ? 62 : 86) + ((i * 37) % 7) - 3;
+      const e = out5(clamp(k * 1.5 - i * .03)); const len = base * e * (1 + .04 * Math.sin(t * 3 + i));
+      rays[i].setAttribute("x1", 0); rays[i].setAttribute("y1", 0);
+      rays[i].setAttribute("x2", Math.cos(ang) * len); rays[i].setAttribute("y2", Math.sin(ang) * len);
+      rays[i].style.opacity = e > 0 ? 1 : 0;
+    }
+    scramble($("#t8"), t, 3.5, .09, .5);
+    charsIn($("#s8sub"), t, 4.5, .045, { blur: 8, y: 20 });
+    show($("#url"), t, 5.6, { y: 16 });
   },
 };
 
+/* =================== frame =================== */
+let lastScene = -1;
 function render(t) {
-  // background drift
-  $("#b1").style.transform = `translate(${1250 + Math.sin(t * .23) * 160}px, ${-240 + Math.cos(t * .19) * 120}px)`;
-  $("#b2").style.transform = `translate(${-380 + Math.cos(t * .17) * 140}px, ${420 + Math.sin(t * .21) * 110}px)`;
-  $("#b3").style.transform = `translate(${800 + Math.sin(t * .13 + 1) * 260}px, ${600 + Math.cos(t * .11) * 90}px)`;
-
-  let chapter = 0;
-  SCENES.forEach((sc, i) => {
-    const el = S[sc.id];
-    const vis = Math.min(prog(t, sc.a, .6), 1 - prog(t, sc.b - .6, .6));
-    el.style.opacity = vis;
-    el.style.visibility = vis > 0 ? "visible" : "hidden";
-    if (vis > 0) update[sc.id](t - sc.a);
-    if (t >= sc.a) chapter = i;
-  });
-
-  // chrome (chapters 1-6)
-  const cv = Math.min(prog(t, 7, .6), 1 - prog(t, 57.4, .6));
-  $("#chrome").style.opacity = cv;
-  if (cv > 0) {
-    const brand = $("#brand svg");
-    drawSpark(brand, 1, t * 12, 0);
-    $("#pager").textContent = String(Math.min(6, Math.max(1, chapter))).padStart(2, "0") + " / 06";
-    $("#progress i").style.width = (100 * clamp((t - 7) / (58 - 7))) + "%";
+  const e = kf(ENV, t), s = kf(SPH, t);
+  // canvas
+  g.fillStyle = "#050507"; g.fillRect(0, 0, W, H);
+  const bg = g.createRadialGradient(W / 2, H * .55, 0, W / 2, H * .55, 1100);
+  bg.addColorStop(0, "rgba(60,26,14,.55)"); bg.addColorStop(1, "rgba(5,5,7,0)");
+  g.fillStyle = bg; g.fillRect(0, 0, W, H);
+  drawGrid(t, e.grid);
+  drawStars(t, e);
+  const s5a = Math.min(prog(t, 35.2, .6), 1 - prog(t, 42.6, .5));
+  const s6a = Math.min(prog(t, 43.2, .6), 1 - prog(t, 49.6, .5));
+  drawSphere(t, s);
+  drawOrbits(t - 35, s5a, s);
+  drawNetwork(t - 43, s6a, s);
+  // outro flash ring
+  if (t > 59 && t < 60.4) {
+    const k = prog(t, 59.1, 1.2);
+    g.strokeStyle = `rgba(255,160,120,${(1 - k) * .9})`; g.lineWidth = 3 * (1 - k) + .5;
+    g.beginPath(); g.arc(960, 330, 20 + k * 900, 0, 7); g.stroke();
   }
 
-  $("#fade").style.opacity = prog(t, DURATION - 1, 1);
+  // scenes
+  let cur = 0;
+  SCENES.forEach((sc, i) => {
+    const el = $("#" + sc.id);
+    const vis = Math.min(prog(t, sc.a, .25), 1 - prog(t, sc.b - .3, .3));
+    el.style.opacity = vis; el.style.visibility = vis > 0 ? "visible" : "hidden";
+    if (vis > 0) update[sc.id](t - sc.a);
+    if (t >= sc.a) cur = i;
+  });
+
+  // glitch transitions
+  let gk = 0, gc = 0;
+  for (const c of CUTS) { const d = Math.abs(t - c); if (d < .32) { gk = 1 - d / .32; gc = c; } }
+  if (t > 59.05 && t < 59.4) { gk = Math.max(gk, 1 - (t - 59.05) / .35); gc = 59; }
+  const slices = $("#glitch").children, fr = Math.floor(t * FPS);
+  for (let i = 0; i < slices.length; i++) {
+    const on = gk > 0 && hash(fr, i) < gk * .9;
+    const el = slices[i];
+    if (!on) { el.style.opacity = 0; continue; }
+    el.style.opacity = .35 + .65 * hash(fr, i + 50);
+    el.style.top = hash(fr, i + 100) * H + "px";
+    el.style.height = 2 + hash(fr, i + 150) * 46 + "px";
+    el.style.width = 20 + hash(fr, i + 200) * 80 + "%";
+    el.style.left = hash(fr, i + 250) * 40 + "%";
+    el.style.background = hash(fr, i + 300) > .5 ? "rgba(255,122,69,.85)" : "rgba(242,238,232,.7)";
+  }
+  const jit = gk > 0 ? (hash(fr, 999) - .5) * 40 * gk : 0;
+  SCENES.forEach(sc => { const el = $("#" + sc.id); if (el.style.visibility === "visible") el.style.transform = `translateX(${jit}px)`; });
+  $("#flash").style.opacity = gk * .5;
+
+  // HUD
+  const hudA = Math.min(prog(t, .2, .6), 1 - prog(t, DURATION - 1.4, .8));
+  $("#hud").style.opacity = hudA;
+  const f = Math.floor(t * FPS), ss = Math.floor(t);
+  $("#hud-tr").textContent = `T+${String(Math.floor(ss / 60)).padStart(2, "0")}:${String(ss % 60).padStart(2, "0")}:${String(f % FPS).padStart(2, "0")}`;
+  $("#hud-bl").textContent = SCENES[cur].code;
+  $("#track i").style.width = (100 * t / DURATION) + "%";
+
+  // grain + final fade
+  $("#grain").style.transform = `translate(${-hash(f, 1) * 128}px, ${-hash(f, 2) * 128}px)`;
+  $("#black").style.opacity = Math.max(1 - prog(t, 0, .6), prog(t, DURATION - 1.2, 1.2));
+}
+function drawStars(t, e) {
+  const wd = warpDistM(t);
+  const fov = 700;
+  for (let i = 0; i < STARS.length; i++) {
+    const s = STARS[i];
+    const z = ((s.z - t * .02 - wd) % 1 + 1) % 1 + .02;
+    const px = W / 2 + s.x * fov / z * .9, py = H / 2 + s.y * fov / z * .6;
+    if (px < -50 || px > W + 50 || py < -50 || py > H + 50) continue;
+    const a = e.st * (.25 + .75 * s.b) * clamp((1 - z) * 1.6) * clamp(z * 8);
+    const sz = (1 - z) * 3.2 + .6;
+    if (e.spd > .15) {
+      const z2 = z + e.spd * .06;
+      const qx = W / 2 + s.x * fov / z2 * .9, qy = H / 2 + s.y * fov / z2 * .6;
+      g.strokeStyle = `rgba(255,220,200,${a})`; g.lineWidth = sz * .7;
+      g.beginPath(); g.moveTo(qx, qy); g.lineTo(px, py); g.stroke();
+    } else {
+      g.globalAlpha = a; g.fillStyle = "#F2EEE8"; g.fillRect(px, py, sz * .7, sz * .7); g.globalAlpha = 1;
+    }
+  }
 }
 
 window.DURATION = DURATION;

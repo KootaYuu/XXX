@@ -4,7 +4,7 @@
 //   node render.js                       -> claude-intro.mp4 (silent video track)
 //   node render.js --preview 3,12,20     -> preview-<t>.png stills at the given seconds
 //
-// Env: FPS (default 30), FFMPEG (path to ffmpeg binary, default "ffmpeg").
+// Env: FPS (default 30), CRF (x264 quality, default 23), FFMPEG (ffmpeg binary, default "ffmpeg").
 const path = require("path");
 const { spawn } = require("child_process");
 const { chromium } = require("playwright");
@@ -12,6 +12,7 @@ const { chromium } = require("playwright");
 const FPS = +(process.env.FPS || 30);
 const FFMPEG = process.env.FFMPEG || "ffmpeg";
 const OUT_DIR = process.env.OUT_DIR || __dirname;
+const CRF = process.env.CRF || "23";
 
 async function main() {
   const browser = await chromium.launch();
@@ -33,7 +34,7 @@ async function main() {
   const out = path.join(OUT_DIR, "video-only.mp4");
   const ff = spawn(FFMPEG, [
     "-y", "-f", "image2pipe", "-framerate", String(FPS), "-c:v", "mjpeg", "-i", "-",
-    "-c:v", "libx264", "-preset", "slow", "-crf", "18", "-pix_fmt", "yuv420p",
+    "-c:v", "libx264", "-preset", "slow", "-crf", CRF, "-pix_fmt", "yuv420p",
     "-movflags", "+faststart", out,
   ], { stdio: ["pipe", "inherit", "inherit"] });
 
