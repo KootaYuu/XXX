@@ -193,7 +193,10 @@ while t < SEC["range"] - 1e-6:
         s = saw(hz(root - 12), BEAT / 2, cutoff=cut, maxh=20) * adsr(int(BEAT / 2 * SR), .004, .08)
         bass.add(s, t + beat(k / 2), gain=.38)
     t += BAR
-for k, b in enumerate((1, 2, 6)):
+# beat 3: line drawing cuts to the real bike; beats 4, 5, 7: title slams
+riser(SEC["reveal"] + beat(3), beat(2), gain=.18)
+impact(SEC["reveal"] + beat(3), gain=.8, size=.8)
+for b in (4, 5, 7):
     impact(SEC["reveal"] + beat(b), gain=.45, size=.5)
     stab(SEC["reveal"] + beat(b), chord_at(SEC["reveal"] + beat(b))[1], gain=.05)
 riser(SEC["range"], BAR, gain=.3)
