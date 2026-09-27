@@ -2,7 +2,8 @@
 
 Writes music.wav (44.1 kHz stereo). Structure follows index.html:
 boot blips -> warp riser + impact (3.4s) -> pulse arp -> groove with kick/hats/sub
--> risers into every scene cut + impacts on the cut -> breakdown (50-56s)
+-> risers into every scene cut + impacts on the cut, hits on each montage beat
+-> breakdown (50-56s) with whooshes for the fly-through words
 -> final build into the collapse at 59.1s -> ring out.
 """
 import pathlib
@@ -18,6 +19,8 @@ N = int(SR * DURATION)
 BPM = 120
 BEAT = 60 / BPM
 CUTS = [8, 16, 26, 35, 43, 50, 56]
+BEATS = [16.05, 17.65, 19.25, 20.85, 22.45, 24.05, 25.9]   # capability montage
+FLY = [50.25, 51.95, 53.65]                                # principle words fly-through
 WARP = 3.4
 COLLAPSE = 59.1
 GROOVE = (8.0, 50.0)          # kick + hats
@@ -152,6 +155,24 @@ for c in CUTS:
     impact(c, gain=.75 if c != 56 else .9)
 riser(COLLAPSE, 3.0, gain=.34)
 impact(COLLAPSE, gain=1.1, size=1.6)
+
+
+def whoosh(peak, rise=.45, fall=.35, gain=.2):
+    d = rise + fall
+    n = noise(d)
+    x = sweep_filter(n, 400, 7000, "lowpass", shape=1.2)
+    env = np.concatenate([np.linspace(0, 1, int(rise * SR)) ** 2, np.linspace(1, 0, len(x) - int(rise * SR)) ** 1.5])
+    fx.add(x * env, peak - rise, pan=rng.uniform(-.3, .3), gain=gain)
+
+
+# capability montage: a whoosh + light hit on every beat
+for b in BEATS[1:6]:
+    whoosh(b, .3, .25, gain=.16)
+    impact(b, gain=.35, size=.5)
+# principles: each word flies in (hit) and past the camera (whoosh)
+for a in FLY:
+    impact(a, gain=.45, size=.6)
+    whoosh(a + 1.62, .5, .3, gain=.22)
 
 # ---------------- pads (warp -> collapse) ----------------
 t0 = WARP
